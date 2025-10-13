@@ -34,7 +34,7 @@ const Header = () => {
 
   const handleExploreBtn = async () => {
     try {
-      const response = await fetch(`${API_URL}/`);
+      const response = await fetch(`${API_URL}`);
       const data = await response.json();
       console.log(data);
     } catch (error) {
