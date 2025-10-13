@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import PremiumCarousel from "../../components/ui/card-carousel";
 import { Link } from "react-router-dom";
+import API_URL from "../../utils/api";
 // Enhanced Premium Carousel Component
 
 const Header = () => {
@@ -33,7 +34,7 @@ const Header = () => {
 
   const handleExploreBtn = async () => {
     try {
-      const response = await fetch("http://localhost:8000/");
+      const response = await fetch(`${API_URL}/`);
       const data = await response.json();
       console.log(data);
     } catch (error) {
