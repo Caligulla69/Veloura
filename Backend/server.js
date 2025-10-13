@@ -23,7 +23,7 @@ app.use(express.json());
 // ✅ CORS - Allow both localhost AND production frontend
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://veloura-murex.vercel.app/", // Replace with your actual frontend URL
+  "https://veloura-rose.vercel.app/", // Replace with your actual frontend URL
   process.env.FRONTEND_URL // Set this in Vercel environment variables
 ].filter(Boolean);
 
