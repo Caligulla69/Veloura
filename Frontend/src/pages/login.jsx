@@ -42,8 +42,8 @@ const handleSubmit = async (e) => {
 
   try {
     const endpoint = isLoginMode
-      ? "http://localhost:8000/loginUser"
-      : "http://localhost:8000/registerUser";
+      ? `${API_URL}/loginUser`
+      : `${API_URL}/registerUser`;
 
     const payload = isLoginMode
       ? {

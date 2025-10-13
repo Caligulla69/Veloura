@@ -37,6 +37,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
+import API_URL from "../../utils/api";
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -220,14 +221,7 @@ const UserDashboard = () => {
     return statusIcons[status.toLowerCase()] || Package;
   }, []);
 
-  const getNotificationIcon = useCallback((type) => {
-    const notificationIcons = {
-      order: Package,
-      sale: Tag,
-      recommendation: Gift,
-    };
-    return notificationIcons[type] || Bell;
-  }, []);
+
 
   // Optimized event handlers
   const handleImageUpload = useCallback((event) => {

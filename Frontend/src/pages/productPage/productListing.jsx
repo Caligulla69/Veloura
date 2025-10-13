@@ -220,7 +220,7 @@ const LuxuryProductListing = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:8000/products", {
+        const res = await fetch(`${API_URL}/products`, {
           credentials: "include", // optional if authentication needed
         });
 

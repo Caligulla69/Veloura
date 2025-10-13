@@ -104,7 +104,7 @@ const handleSubmit = async (e) => {
     formDataToSend.append("stock", formData.stock);
     formDataToSend.append("image", formData.image); // 👈 actual file
 
-    const response = await fetch("http://localhost:8000/addProduct", {
+    const response = await fetch(`${API_URL}/addProduct`, {
       method: "POST",
       body: formDataToSend,
       credentials: "include",

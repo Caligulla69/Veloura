@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import API_URL from "../../utils/api";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -51,7 +52,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:8000/products", {
+        const res = await fetch(`${API_URL}/products`, {
           credentials: "include", // optional if authentication needed
         });
 
@@ -72,7 +73,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:8000/users", {
+        const res = await fetch(`${API_URL}/users`, {
           credentials: "include", // optional if authentication needed
         });
 
@@ -93,7 +94,7 @@ const AdminDashboard = () => {
     try {
       const newStatus = currentStatus === "disabled" ? "active" : "disabled";
 
-      const res = await fetch(`http://localhost:8000/users/${id}/status`, {
+      const res = await fetch(`${API_URL}/users/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
