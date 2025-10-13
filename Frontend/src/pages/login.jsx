@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { redirect, useNavigate } from "react-router-dom";
+import API_URL from "../utils/api";
 
 const PremiumLoginPage = () => {
   const [isLoginMode, setIsLoginMode] = useState(true);
