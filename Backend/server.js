@@ -20,20 +20,40 @@ connectDB();
 // Middleware
 app.use(express.json());
 
-// ✅ CORS must be configured before routes
+// ✅ CORS - Allow both localhost AND production frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://your-frontend-app.vercel.app", // Replace with your actual frontend URL
+  process.env.FRONTEND_URL // Set this in Vercel environment variables
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // React app URL
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-// ✅ Express Session (use a safer secret in production)
+// ✅ Express Session - Use environment variable for secret
 app.use(
   session({
-    secret: "hey Nigga", // ❌ DO NOT use offensive words; change this to something secure like process.env.SESSION_SECRET
+    secret: process.env.SESSION_SECRET || "your-secure-secret-here",
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
   })
 );
 
@@ -46,14 +66,33 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Routes
-app.use("/", indexRouter);
-
-// Health Check Route
+// Health Check Route (must come before other routes)
 app.get("/", (req, res) => {
-  res.json({ message: "Server is running 🚀" });
+  res.json({ 
+    message: "Server is running 🚀",
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Start Server
+// API Routes
+app.use("/api", indexRouter); // Changed from "/" to "/api" for better structure
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Something went wrong!" });
+});
+
+// Start Server (only for local development)
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Export for Vercel
+module.exports = app;
