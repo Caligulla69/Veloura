@@ -11,6 +11,7 @@ import { useWishlistStore } from "../../store/useWishlistStore";
 import { useCartStore } from "../../store/useCartStore";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
+import API_URL from "../../utils/api";
 
 
 // Memoized ProductCard component
