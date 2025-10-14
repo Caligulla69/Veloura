@@ -9,7 +9,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { redirect, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import API_URL from "../utils/api";
 
 const PremiumLoginPage = () => {
