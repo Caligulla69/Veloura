@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import {
   Search,
   Heart,
@@ -10,9 +10,7 @@ import {
 import { useWishlistStore } from "../../store/useWishlistStore";
 import { useCartStore } from "../../store/useCartStore";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
 import API_URL from "../../utils/api";
-
 
 // Memoized ProductCard component
 const ProductCard = memo(({ product }) => {
@@ -30,8 +28,6 @@ const ProductCard = memo(({ product }) => {
     addToCart(product);
   }, [product, addToCart]);
 
-
-
   return (
     <div className="group relative bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-3xl overflow-hidden hover:border-zinc-700 transition-all duration-300 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1.5">
       
@@ -39,23 +35,26 @@ const ProductCard = memo(({ product }) => {
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {/* Product Badges */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 flex flex-col gap-2 sm:gap-3">
-        {product.isNew && (
-          <span className="bg-white text-black px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase backdrop-blur-sm shadow-lg">
-            New
-          </span>
-        )}
-        {product.isBestseller && (
-          <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 text-black px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase shadow-lg">
-            Bestseller
-          </span>
-        )}
-      </div>
+      {(product.isNew || product.isBestseller) && (
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 flex flex-col gap-2 sm:gap-3">
+          {product.isNew && (
+            <span className="bg-white text-black px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase backdrop-blur-sm shadow-lg">
+              New
+            </span>
+          )}
+          {product.isBestseller && (
+            <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 text-black px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase shadow-lg">
+              Bestseller
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Wishlist Button */}
       <button
         onClick={handleWishlistClick}
         className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 p-2 sm:p-3 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 group-hover:scale-110"
+        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
       >
         <Heart
           className={`w-5 h-5 transition-all ${
@@ -87,6 +86,7 @@ const ProductCard = memo(({ product }) => {
           <button 
             onClick={handleAddToCart}
             className="bg-black/60 text-white p-2 sm:p-3 rounded-full hover:bg-black/80 transition-all duration-300 shadow-lg"
+            aria-label="Add to cart"
           >
             <ShoppingBag className="w-5 h-5" />
           </button>
@@ -112,7 +112,6 @@ const ProductCard = memo(({ product }) => {
           {product.name}
         </h3>
 
-  
         {/* Price */}
         <div className="flex items-center gap-3">
           <span className="text-white text-lg sm:text-xl lg:text-2xl font-light tracking-wide">
@@ -120,7 +119,7 @@ const ProductCard = memo(({ product }) => {
           </span>
           {product.originalPrice && (
             <span className="text-zinc-500 text-sm sm:text-base line-through font-light">
-              ${product.price}
+              ${product.originalPrice}
             </span>
           )}
         </div>
@@ -128,6 +127,8 @@ const ProductCard = memo(({ product }) => {
     </div>
   );
 });
+
+ProductCard.displayName = 'ProductCard';
 
 // Memoized FilterSidebar component
 const FilterSidebar = memo(({ 
@@ -185,7 +186,7 @@ const FilterSidebar = memo(({
           <input
             type="number"
             placeholder="Min"
-            value={selectedFilters.priceRange[0]}
+            value={selectedFilters.priceRange[0] || ''}
             onChange={(e) =>
               onUpdateFilter("priceRange", [
                 parseInt(e.target.value) || 0,
@@ -197,7 +198,7 @@ const FilterSidebar = memo(({
           <input
             type="number"
             placeholder="Max"
-            value={selectedFilters.priceRange[1]}
+            value={selectedFilters.priceRange[1] || ''}
             onChange={(e) =>
               onUpdateFilter("priceRange", [
                 selectedFilters.priceRange[0],
@@ -212,37 +213,37 @@ const FilterSidebar = memo(({
   );
 });
 
-const LuxuryProductListing = () => {
+FilterSidebar.displayName = 'FilterSidebar';
 
+const LuxuryProductListing = () => {
   const [productData, setProductData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const cartCount = useCartStore((state) => state.cart.length);
   const wishlistCount = useWishlistStore((state) => state.wishlist.length);
    
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch(`${API_URL}/products`, {
-          credentials: "include", // optional if authentication needed
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error("Failed to fetch products");
 
         const data = await res.json();
-        console.log(data);
-        
         setProductData(data);
       } catch (err) {
-        throw new Error(err.message);
+        setError(err.message);
+        console.error("Error fetching products:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchProducts();
   }, []);
-  console.log(productData);
-  
-
-  // Memoized products data
-  const products = useMemo(() => productData, []);
 
   // State management
   const [searchTerm, setSearchTerm] = useState("");
@@ -258,22 +259,22 @@ const LuxuryProductListing = () => {
 
   // Memoized derived values
   const categories = useMemo(() => {
-    return ["All", ...new Set(products.map((p) => p.category))];
-  }, [products]);
+    return ["All", ...new Set(productData.map((p) => p.category))];
+  }, [productData]);
 
   const brands = useMemo(() => {
-    return [...new Set(products.map((p) => p.brand))];
-  }, [products]);
+    return [...new Set(productData.map((p) => p.brand))];
+  }, [productData]);
 
   // Optimized filter and sort function
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter((product) => {
+    let filtered = productData.filter((product) => {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch = 
           product.name.toLowerCase().includes(searchLower) ||
           product.brand.toLowerCase().includes(searchLower) ||
-          product.tags.some((tag) => tag.toLowerCase().includes(searchLower));
+          (product.tags && product.tags.some((tag) => tag.toLowerCase().includes(searchLower)));
         if (!matchesSearch) return false;
       }
 
@@ -290,7 +291,7 @@ const LuxuryProductListing = () => {
         return false;
       }
 
-      if (selectedFilters.colors.size > 0 && 
+      if (selectedFilters.colors.size > 0 && product.colors &&
           !product.colors.some((color) => selectedFilters.colors.has(color))) {
         return false;
       }
@@ -300,17 +301,13 @@ const LuxuryProductListing = () => {
 
     switch (sortBy) {
       case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
+        return filtered.sort((a, b) => a.price - b.price);
       case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-   
+        return filtered.sort((a, b) => b.price - a.price);
       case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
       default:
-        filtered.sort((a, b) => {
+        return filtered.sort((a, b) => {
           if (a.isBestseller !== b.isBestseller) {
             return b.isBestseller - a.isBestseller;
           }
@@ -320,9 +317,7 @@ const LuxuryProductListing = () => {
           return 0;
         });
     }
-
-    return filtered;
-  }, [products, searchTerm, selectedCategory, selectedFilters, sortBy]);
+  }, [productData, searchTerm, selectedCategory, selectedFilters, sortBy]);
 
   // Optimized event handlers
   const updateFilter = useCallback((filterType, value) => {
@@ -370,6 +365,22 @@ const LuxuryProductListing = () => {
     setShowFilters(prev => !prev);
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950 flex items-center justify-center">
+        <div className="text-white text-xl font-light">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950 flex items-center justify-center">
+        <div className="text-red-400 text-xl font-light">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950">
       {/* Luxury grain texture overlay */}
@@ -381,7 +392,7 @@ const LuxuryProductListing = () => {
         {/* Hero Header with Cart/Wishlist Indicators */}
         <div className="text-center py-8 sm:py-12 lg:py-16 px-4 sm:px-6">
           <div className="absolute top-6 right-6 flex gap-4">
-            <button className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all">
+            <button className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all" aria-label="Wishlist">
               <Heart className="w-5 h-5 text-white" />
               {wishlistCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
@@ -389,7 +400,7 @@ const LuxuryProductListing = () => {
                 </span>
               )}
             </button>
-            <Link to='/cart' className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all">
+            <Link to='/cart' className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all" aria-label="Cart">
               <ShoppingBag className="w-5 h-5 text-white" />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
