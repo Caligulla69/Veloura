@@ -9,15 +9,17 @@ import {
 } from "lucide-react";
 import { useWishlistStore } from "../../store/useWishlistStore";
 import { useCartStore } from "../../store/useCartStore";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
+import { useAuthStore } from "../../store/useAuthStore";
 
 // Memoized ProductCard component
 const ProductCard = memo(({ product }) => {
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const { addToCart } = useCartStore();
-  
+  const {prod} =useAuthStore()
   const isWishlisted = isInWishlist(product.id);
+  const navigate=useNavigate()
 
   const handleWishlistClick = useCallback(() => {
     toggleWishlist(product);
@@ -27,6 +29,15 @@ const ProductCard = memo(({ product }) => {
     e.preventDefault();
     addToCart(product);
   }, [product, addToCart]);
+
+  const handleProductClick=(id)=>{
+    console.log(id);
+    
+      const setProd = useAuthStore.getState().setProd; // access store function
+    
+      setProd(id);
+      navigate("/prodDetails")
+  }
 
   return (
     <div className="group relative bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-3xl overflow-hidden hover:border-zinc-700 transition-all duration-300 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1.5">
@@ -78,7 +89,7 @@ const ProductCard = memo(({ product }) => {
         {/* Quick Actions */}
         <div className="absolute text-center inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-6 flex gap-2 opacity-0 group-hover:opacity-100 translate-y-6 group-hover:translate-y-0 transition-all duration-500 delay-75">
           <button 
-            onClick={() => alert(`View details for ${product.name}`)}
+            onClick={() =>handleProductClick(product._id)}
             className="flex-1 bg-white text-black py-2 px-4 rounded-full text-sm font-medium tracking-wide hover:bg-zinc-100 transition-all duration-300 shadow-lg"
           >
             View

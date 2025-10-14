@@ -11,7 +11,7 @@ const PremiumCartPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
-  console.log(cart);
+
   
   const updateQuantity = (id, newQuantity) => {
     if (newQuantity === 0) {
