@@ -80,6 +80,7 @@ router.post("/loginUser", (req, res, next) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        
       };
       res.status(200).json({ message: "Login successful", user: safeUser });
     });
@@ -89,7 +90,24 @@ router.post("/loginUser", (req, res, next) => {
 router.get("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
-    res.json({ message: "Logged out successfully" });
+
+    // Destroy the session completely
+    req.session.destroy((err) => {
+      if (err) return next(err);
+
+      // ✅ Clear the cookie with ALL necessary attributes
+      res.clearCookie("connect.sid", {
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain: process.env.NODE_ENV === "production" 
+          ? process.env.COOKIE_DOMAIN 
+          : undefined
+      });
+
+      res.status(200).json({ message: "Logged out successfully" });
+    });
   });
 });
 
@@ -242,9 +260,12 @@ function isLoggedIn(req, res, next) {
   res.status(401).json({ message: "Unauthorized" });
 }
 
-function isAdmin(req, res, next) {
-  if (req.isAuthenticated() && req.user.role === "admin") return next();
-  res.status(403).json({ message: "Admin access only" });
-}
+router.get("/checkAuth", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ isLoggedIn: true, user: req.user });
+  } else {
+    res.json({ isLoggedIn: false });
+  }
+});
 
 module.exports = router;

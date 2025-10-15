@@ -40,6 +40,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
+import {checkAuth} from "../../utils/checkAuth";
+import { logout } from "../../utils/logout";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -51,6 +53,14 @@ const AdminDashboard = () => {
   const redirect = useNavigate();
   useEffect(() => {
     const fetchProducts = async () => {
+
+      const isAuthenticated= await checkAuth()
+      console.log(isAuthenticated);
+      
+      if(!isAuthenticated){
+        redirect('/login')
+        return
+      }
       try {
         const res = await fetch(`${API_URL}/products`, {
           credentials: "include", // optional if authentication needed
@@ -89,6 +99,7 @@ const AdminDashboard = () => {
 
     fetchUsers();
   }, []);
+ 
 
   const handleToggleUserStatus = async (id, currentStatus) => {
     try {
@@ -194,7 +205,8 @@ const AdminDashboard = () => {
 
   const handleTabChange = useCallback((tabId) => {
     if (tabId === "logout") {
-      redirect("/");
+
+      logout(redirect)
     }
     if (tabId === "home") {
       redirect("/prodListing");
