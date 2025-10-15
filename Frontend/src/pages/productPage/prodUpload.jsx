@@ -1,5 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { useEffect } from 'react';
+import { checkAuth } from '../../utils/checkAuth';
+import { useNavigate } from 'react-router-dom';
 
 const PremiumProductUpload = () => {
   const fileInputRef = useRef(null);
@@ -17,6 +20,25 @@ const PremiumProductUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
   const [message, setMessage] = useState('');
+  const navigate= useNavigate()
+  
+   useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const isAuthenticated = await checkAuth();
+        
+        if (!isAuthenticated) {
+          navigate("/login");
+          return;
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      }
+    };
+  
+    checkAuthentication();
+  }, [navigate]);
 
   const categories = ['Electronics', 'Clothing', 'Home', 'Sports', 'Books', 'Toys', 'Beauty', 'Food'];
   const brands = ['Brand A', 'Brand B', 'Brand C', 'Brand D', 'Premium Co', 'Luxury Inc', 'Standard Co'];

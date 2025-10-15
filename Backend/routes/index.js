@@ -111,7 +111,7 @@ router.get("/logout", (req, res, next) => {
   });
 });
 
-router.get("/dashboard", isLoggedIn, async (req, res) => {
+router.get("/userData", isLoggedIn, async (req, res) => {
   const user = await UserModel.findById(req.user._id).populate("orders");
   res.json({ user });
 });

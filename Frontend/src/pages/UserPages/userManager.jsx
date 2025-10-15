@@ -29,15 +29,16 @@ import {
   Tag,
   Menu,
   Check,
-  Lock,
-  HelpCircle,
-  MessageCircle,
   Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useWishlistStore } from "../../store/useWishlistStore";
+import { useEffect } from "react";
+import { logout } from "../../utils/logout";
+import { checkAuth } from "../../utils/checkAuth";
+import API_URL from "../../utils/api";
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -47,17 +48,63 @@ const UserDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
-  const { user } = useAuthStore();
+  const [user, setUser] = useState([]);
   const navigate = useNavigate();
   const { wishlist, removeFromWishlist } = useWishlistStore();
 
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const isAuthenticated = await checkAuth();
+
+        if (!isAuthenticated) {
+          navigate("/login");
+          return;
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      }
+    };
+
+    checkAuthentication();
+  }, [navigate]);
+
   const [profileData, setProfileData] = useState({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phone: user.phone,
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
   });
 
+  // Your existing useEffect for fetching user data
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/userData`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setUser(data.user);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      }
+    };
+
+    getUserData();
+  }, []);
+
+  // Add this new useEffect to sync profileData with user
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      });
+    }
+  }, [user]);
   const [addresses, setAddresses] = useState([
     {
       id: 1,
@@ -190,7 +237,7 @@ const UserDashboard = () => {
   const handleTabChange = useCallback(
     (tabId) => {
       if (tabId === "logout") {
-        navigate("/");
+        logout(navigate);
       }
       if (tabId === "home") {
         navigate("/prodListing");
@@ -760,7 +807,7 @@ const UserDashboard = () => {
                               <Eye className="w-4 h-4" />
                               <span>View Details</span>
                             </button>
-                   {order.status.toLowerCase() === "delivered" && (
+                            {order.status.toLowerCase() === "delivered" && (
                               <button className="flex items-center space-x-2 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-colors">
                                 <RefreshCw className="w-4 h-4" />
                                 <span>Reorder</span>

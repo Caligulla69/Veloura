@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Heart, Star, Minus, Plus, ShoppingBag, Eye, ChevronLeft, ChevronRight, Truck, RotateCcw, Shield, Award, Sparkles, X } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useCartStore } from '../../store/useCartStore';
 import API_URL from '../../utils/api';
+import { checkAuth } from '../../utils/checkAuth';
 
 // Ultra-optimized memoized components
 const StarRating = memo(({ rating }) => {
@@ -67,6 +68,26 @@ const ProductDetailPage = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const navigate=useNavigate()
+
+  
+   useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const isAuthenticated = await checkAuth();
+        
+        if (!isAuthenticated) {
+          navigate("/login");
+          return;
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      }
+    };
+  
+    checkAuthentication();
+  }, [navigate]);
 
   // Fetch product data
   useEffect(() => {

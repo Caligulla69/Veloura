@@ -12,6 +12,7 @@ import { useCartStore } from "../../store/useCartStore";
 import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
 import { useAuthStore } from "../../store/useAuthStore";
+import { checkAuth } from "../../utils/checkAuth";
 
 // Memoized ProductCard component
 const ProductCard = memo(({ product }) => {
@@ -20,6 +21,25 @@ const ProductCard = memo(({ product }) => {
   const {prod} =useAuthStore()
   const isWishlisted = isInWishlist(product.id);
   const navigate=useNavigate()
+
+  
+   useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const isAuthenticated = await checkAuth();
+        
+        if (!isAuthenticated) {
+          navigate("/login");
+          return;
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      }
+    };
+  
+    checkAuthentication();
+  }, [navigate]);
 
   const handleWishlistClick = useCallback(() => {
     toggleWishlist(product);
