@@ -16,7 +16,7 @@ import { useEffect } from "react";
 import { checkAuth } from "../utils/checkAuth";
 
 const PremiumCartPage = () => {
-  const { cart } = useCartStore();
+  const { cart,removeFromCart } = useCartStore();
   const [cartItems, setCartItems] = useState(cart);
   const navigate= useNavigate()
   const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +55,7 @@ const PremiumCartPage = () => {
 
   const removeItem = (id) => {
     setCartItems((items) => items.filter((item) => item.id !== id));
+    removeFromCart(id)
   };
 
   const subtotal = cartItems.reduce(

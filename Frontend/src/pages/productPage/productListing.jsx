@@ -12,56 +12,52 @@ import { useCartStore } from "../../store/useCartStore";
 import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
 import { useAuthStore } from "../../store/useAuthStore";
-import { checkAuth } from "../../utils/checkAuth";
 
 // Memoized ProductCard component
 const ProductCard = memo(({ product }) => {
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const { addToCart } = useCartStore();
-  const {prod} =useAuthStore()
+  const { prod } = useAuthStore();
   const isWishlisted = isInWishlist(product.id);
-  const navigate=useNavigate()
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  
-   useEffect(() => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
     const checkAuthentication = async () => {
-      try {
-        const isAuthenticated = await checkAuth();
-        
-        if (!isAuthenticated) {
-          navigate("/login");
-          return;
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        navigate("/login");
-      }
+      const isAuthenticated = await checkAuth();
+      setIsAuthenticated(isAuthenticated);
     };
-  
     checkAuthentication();
-  }, [navigate]);
+  }, []);
 
   const handleWishlistClick = useCallback(() => {
     toggleWishlist(product);
   }, [product, toggleWishlist]);
 
-  const handleAddToCart = useCallback((e) => {
-    e.preventDefault();
-    addToCart(product);
-  }, [product, addToCart]);
+  const handleAddToCart = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (isAuthenticated) {
+        addToCart(product);
+      } else {
+        navigate("/login");
+      }
+    },
+    [product, addToCart]
+  );
 
-  const handleProductClick=(id)=>{
+  const handleProductClick = (id) => {
     console.log(id);
-    
-      const setProd = useAuthStore.getState().setProd; // access store function
-    
-      setProd(id);
-      navigate("/prodDetails")
-  }
+
+    const setProd = useAuthStore.getState().setProd; // access store function
+
+    setProd(id);
+    navigate("/prodDetails");
+  };
 
   return (
     <div className="group relative bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-3xl overflow-hidden hover:border-zinc-700 transition-all duration-300 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1.5">
-      
       {/* Luxury gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -108,13 +104,13 @@ const ProductCard = memo(({ product }) => {
 
         {/* Quick Actions */}
         <div className="absolute text-center inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-6 flex gap-2 opacity-0 group-hover:opacity-100 translate-y-6 group-hover:translate-y-0 transition-all duration-500 delay-75">
-          <button 
-            onClick={() =>handleProductClick(product._id)}
+          <button
+            onClick={() => handleProductClick(product._id)}
             className="flex-1 bg-white text-black py-2 px-4 rounded-full text-sm font-medium tracking-wide hover:bg-zinc-100 transition-all duration-300 shadow-lg"
           >
             View
           </button>
-          <button 
+          <button
             onClick={handleAddToCart}
             className="bg-black/60 text-white p-2 sm:p-3 rounded-full hover:bg-black/80 transition-all duration-300 shadow-lg"
             aria-label="Add to cart"
@@ -159,92 +155,89 @@ const ProductCard = memo(({ product }) => {
   );
 });
 
-ProductCard.displayName = 'ProductCard';
+ProductCard.displayName = "ProductCard";
 
 // Memoized FilterSidebar component
-const FilterSidebar = memo(({ 
-  brands, 
-  selectedFilters, 
-  onUpdateFilter, 
-  onClearFilters 
-}) => {
-  return (
-    <div className="bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-3xl p-5 sm:p-6 lg:p-8 h-fit shadow-lg">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-white font-light text-xl lg:text-2xl tracking-wide">
-          Filters
-        </h3>
-        <button
-          onClick={onClearFilters}
-          className="text-zinc-400 hover:text-white text-sm font-light tracking-wide transition-colors duration-300"
-        >
-          Clear All
-        </button>
-      </div>
+const FilterSidebar = memo(
+  ({ brands, selectedFilters, onUpdateFilter, onClearFilters }) => {
+    return (
+      <div className="bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-3xl p-5 sm:p-6 lg:p-8 h-fit shadow-lg">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h3 className="text-white font-light text-xl lg:text-2xl tracking-wide">
+            Filters
+          </h3>
+          <button
+            onClick={onClearFilters}
+            className="text-zinc-400 hover:text-white text-sm font-light tracking-wide transition-colors duration-300"
+          >
+            Clear All
+          </button>
+        </div>
 
-      {/* Brand Filter */}
-      <div className="mb-8">
-        <h4 className="text-white font-light mb-4 text-lg tracking-wide">
-          Brand
-        </h4>
-        <div className="space-y-3">
-          {brands.map((brand) => (
-            <label
-              key={brand}
-              className="flex items-center gap-4 cursor-pointer group hover:bg-zinc-800/30 rounded-xl px-2 py-1 transition-colors duration-200"
-            >
-              <input
-                type="checkbox"
-                checked={selectedFilters.brands.has(brand)}
-                onChange={() => onUpdateFilter("brands", brand)}
-                className="rounded border-zinc-600 bg-transparent text-white focus:ring-white/30 w-5 h-5"
-              />
-              <span className="text-zinc-400 group-hover:text-white transition-colors duration-300 font-light tracking-wide text-base">
-                {brand}
-              </span>
-            </label>
-          ))}
+        {/* Brand Filter */}
+        <div className="mb-8">
+          <h4 className="text-white font-light mb-4 text-lg tracking-wide">
+            Brand
+          </h4>
+          <div className="space-y-3">
+            {brands.map((brand) => (
+              <label
+                key={brand}
+                className="flex items-center gap-4 cursor-pointer group hover:bg-zinc-800/30 rounded-xl px-2 py-1 transition-colors duration-200"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedFilters.brands.has(brand)}
+                  onChange={() => onUpdateFilter("brands", brand)}
+                  className="rounded border-zinc-600 bg-transparent text-white focus:ring-white/30 w-5 h-5"
+                />
+                <span className="text-zinc-400 group-hover:text-white transition-colors duration-300 font-light tracking-wide text-base">
+                  {brand}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div className="mb-2">
+          <h4 className="text-white font-light mb-4 text-lg tracking-wide">
+            Price Range
+          </h4>
+          <div className="flex overflow-hidden rounded-xl border border-zinc-700/60">
+            <input
+              type="number"
+              placeholder="Min"
+              value={selectedFilters.priceRange[0] || ""}
+              onChange={(e) =>
+                onUpdateFilter("priceRange", [
+                  parseInt(e.target.value) || 0,
+                  selectedFilters.priceRange[1],
+                ])
+              }
+              className="flex-1 bg-zinc-800/40 px-4 py-3 text-white text-sm font-light focus:outline-none focus:border-zinc-500 border-r border-zinc-700/60"
+            />
+            <input
+              type="number"
+              placeholder="Max"
+              value={selectedFilters.priceRange[1] || ""}
+              onChange={(e) =>
+                onUpdateFilter("priceRange", [
+                  selectedFilters.priceRange[0],
+                  parseInt(e.target.value) || 5000,
+                ])
+              }
+              className="flex-1 bg-zinc-800/40 px-4 py-3 text-white text-sm font-light focus:outline-none focus:border-zinc-500"
+            />
+          </div>
         </div>
       </div>
+    );
+  }
+);
 
-      {/* Price Range */}
-      <div className="mb-2">
-        <h4 className="text-white font-light mb-4 text-lg tracking-wide">
-          Price Range
-        </h4>
-        <div className="flex overflow-hidden rounded-xl border border-zinc-700/60">
-          <input
-            type="number"
-            placeholder="Min"
-            value={selectedFilters.priceRange[0] || ''}
-            onChange={(e) =>
-              onUpdateFilter("priceRange", [
-                parseInt(e.target.value) || 0,
-                selectedFilters.priceRange[1],
-              ])
-            }
-            className="flex-1 bg-zinc-800/40 px-4 py-3 text-white text-sm font-light focus:outline-none focus:border-zinc-500 border-r border-zinc-700/60"
-          />
-          <input
-            type="number"
-            placeholder="Max"
-            value={selectedFilters.priceRange[1] || ''}
-            onChange={(e) =>
-              onUpdateFilter("priceRange", [
-                selectedFilters.priceRange[0],
-                parseInt(e.target.value) || 5000,
-              ])
-            }
-            className="flex-1 bg-zinc-800/40 px-4 py-3 text-white text-sm font-light focus:outline-none focus:border-zinc-500"
-          />
-        </div>
-      </div>
-    </div>
-  );
-});
-
-FilterSidebar.displayName = 'FilterSidebar';
+FilterSidebar.displayName = "FilterSidebar";
 
 const LuxuryProductListing = () => {
   const [productData, setProductData] = useState([]);
@@ -252,7 +245,7 @@ const LuxuryProductListing = () => {
   const [error, setError] = useState(null);
   const cartCount = useCartStore((state) => state.cart.length);
   const wishlistCount = useWishlistStore((state) => state.wishlist.length);
-   
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -302,10 +295,13 @@ const LuxuryProductListing = () => {
     let filtered = productData.filter((product) => {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           product.name.toLowerCase().includes(searchLower) ||
           product.brand.toLowerCase().includes(searchLower) ||
-          (product.tags && product.tags.some((tag) => tag.toLowerCase().includes(searchLower)));
+          (product.tags &&
+            product.tags.some((tag) =>
+              tag.toLowerCase().includes(searchLower)
+            ));
         if (!matchesSearch) return false;
       }
 
@@ -313,17 +309,25 @@ const LuxuryProductListing = () => {
         return false;
       }
 
-      if (selectedFilters.brands.size > 0 && !selectedFilters.brands.has(product.brand)) {
+      if (
+        selectedFilters.brands.size > 0 &&
+        !selectedFilters.brands.has(product.brand)
+      ) {
         return false;
       }
 
-      if (product.price < selectedFilters.priceRange[0] || 
-          product.price > selectedFilters.priceRange[1]) {
+      if (
+        product.price < selectedFilters.priceRange[0] ||
+        product.price > selectedFilters.priceRange[1]
+      ) {
         return false;
       }
 
-      if (selectedFilters.colors.size > 0 && product.colors &&
-          !product.colors.some((color) => selectedFilters.colors.has(color))) {
+      if (
+        selectedFilters.colors.size > 0 &&
+        product.colors &&
+        !product.colors.some((color) => selectedFilters.colors.has(color))
+      ) {
         return false;
       }
 
@@ -356,7 +360,7 @@ const LuxuryProductListing = () => {
       if (filterType === "priceRange") {
         return { ...prev, priceRange: value };
       }
-      
+
       const newFilters = { ...prev };
       const filterSet = new Set(newFilters[filterType]);
       if (filterSet.has(value)) {
@@ -393,7 +397,7 @@ const LuxuryProductListing = () => {
   }, []);
 
   const toggleFilters = useCallback(() => {
-    setShowFilters(prev => !prev);
+    setShowFilters((prev) => !prev);
   }, []);
 
   if (isLoading) {
@@ -415,15 +419,21 @@ const LuxuryProductListing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950">
       {/* Luxury grain texture overlay */}
-      <div className="fixed inset-0 opacity-30 pointer-events-none bg-repeat bg-[length:256px_256px]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`
-      }} />
+      <div
+        className="fixed inset-0 opacity-30 pointer-events-none bg-repeat bg-[length:256px_256px]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`,
+        }}
+      />
 
       <div className="relative z-10">
         {/* Hero Header with Cart/Wishlist Indicators */}
         <div className="text-center py-8 sm:py-12 lg:py-16 px-4 sm:px-6">
           <div className="absolute top-6 right-6 flex gap-4">
-            <button className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all" aria-label="Wishlist">
+            <button
+              className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all"
+              aria-label="Wishlist"
+            >
               <Heart className="w-5 h-5 text-white" />
               {wishlistCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
@@ -431,7 +441,11 @@ const LuxuryProductListing = () => {
                 </span>
               )}
             </button>
-            <Link to='/cart' className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all" aria-label="Cart">
+            <Link
+              to="/cart"
+              className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all"
+              aria-label="Cart"
+            >
               <ShoppingBag className="w-5 h-5 text-white" />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
@@ -496,7 +510,8 @@ const LuxuryProductListing = () => {
               </button>
 
               <div className="text-zinc-400 text-sm sm:text-base lg:text-lg font-light">
-                {filteredProducts.length} piece{filteredProducts.length !== 1 ? "s" : ""}
+                {filteredProducts.length} piece
+                {filteredProducts.length !== 1 ? "s" : ""}
               </div>
             </div>
 
@@ -529,7 +544,7 @@ const LuxuryProductListing = () => {
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <FilterSidebar 
+                <FilterSidebar
                   brands={brands}
                   selectedFilters={selectedFilters}
                   onUpdateFilter={updateFilter}
@@ -549,7 +564,7 @@ const LuxuryProductListing = () => {
               }`}
             >
               <div className="sticky top-8">
-                <FilterSidebar 
+                <FilterSidebar
                   brands={brands}
                   selectedFilters={selectedFilters}
                   onUpdateFilter={updateFilter}
@@ -563,10 +578,7 @@ const LuxuryProductListing = () => {
               {filteredProducts.length > 0 ? (
                 <div className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
                   {filteredProducts.map((product) => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product}
-                    />
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
               ) : (

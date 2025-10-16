@@ -32,15 +32,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleExploreBtn = async () => {
-    try {
-      const response = await fetch(`${API_URL}`,{method:"GET"});
-      const data = await response.json();
-      console.log(data);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
+  
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-black">
@@ -287,15 +279,15 @@ const Header = () => {
               isLoaded ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
           >
-            <button
-              onClick={handleExploreBtn}
+            <Link
+              to='/prodListing'
               className="group bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium hover:bg-gray-100 transition-all duration-500 flex items-center space-x-2 sm:space-x-3 shadow-2xl hover:shadow-yellow-200/50 text-sm sm:text-base w-full sm:w-auto justify-center transform hover:scale-105 hover:-translate-y-1"
             >
               <span className="tracking-wide">Explore Collection</span>
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
                 <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
-            </button>
+            </Link>
 
             <button className="group border border-white/30 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-light hover:bg-white/10 transition-all duration-500 backdrop-blur-sm hover:shadow-lg hover:shadow-white/20 text-sm sm:text-base w-full sm:w-auto transform hover:scale-105 hover:-translate-y-1 hover:border-white/50">
               <span className="tracking-wide group-hover:tracking-widest transition-all duration-300">

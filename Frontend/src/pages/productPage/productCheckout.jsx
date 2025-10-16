@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import {
   Minus,
   Plus,
@@ -15,14 +15,16 @@ import {
   Save,
   XCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { checkAuth } from "../../utils/checkAuth";
+import { useCartStore } from "../../store/useCartStore";
+import API_URL from "../../utils/api";
 
-// Pre-memoized currency formatter
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
 });
 
-// Optimized cart item with better mobile layout
 const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
   const handleDecrease = useCallback(
     () => onUpdateQuantity(item.id, item.quantity - 1),
@@ -62,7 +64,6 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
             />
           </div>
 
-          {/* Mobile quantity controls next to image */}
           <div className="ml-4 sm:hidden flex items-center bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-xl border border-white/30 rounded-xl h-10">
             <button
               className="p-2 text-white hover:text-white/70 hover:bg-white/10 transition-colors rounded-l-xl"
@@ -91,11 +92,7 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
           <p className="text-white/60 font-light text-sm">
             Color: {item.color}
           </p>
-          <div className="text-white/50 font-light text-xs">
-            SKU: {item.sku}
-          </div>
-
-          {/* Mobile price and remove button */}
+          
           <div className="flex justify-between items-center sm:hidden">
             <div>
               <div className="text-lg font-light text-white">
@@ -118,7 +115,6 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
           </div>
         </div>
 
-        {/* Desktop quantity controls and pricing */}
         <div className="hidden sm:block relative">
           <div className="flex items-center bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-xl border border-white/30 rounded-xl mb-4">
             <button
@@ -165,7 +161,6 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
   );
 });
 
-// Mobile-optimized payment option
 const PaymentOption = memo(({ option, isSelected, onSelect }) => {
   const handleClick = useCallback(
     () => onSelect(option.key),
@@ -198,7 +193,6 @@ const PaymentOption = memo(({ option, isSelected, onSelect }) => {
   );
 });
 
-// Mobile-optimized delivery info
 const DeliveryInfo = memo(
   ({
     formData,
@@ -253,7 +247,7 @@ const DeliveryInfo = memo(
                 Name
               </span>
               <span className="text-white font-light text-sm sm:text-base">
-                {formData.name}
+                {formData.firstName} {formData.lastName}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row sm:justify-between py-2 sm:py-3 border-b border-white/10">
@@ -294,15 +288,28 @@ const DeliveryInfo = memo(
         <div className="space-y-4 sm:space-y-6">
           <div>
             <label className="text-white/80 font-light flex items-center gap-2 mb-2">
-              Name <span className="text-red-400">*</span>
+              First Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
-              name="name"
-              value={tempFormData.name}
+              name="firstName"
+              value={tempFormData.firstName}
               onChange={onTempChange}
               className="w-full bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 text-white placeholder-white/50 focus:outline-none focus:border-white/40 transition-colors text-sm sm:text-base"
-              placeholder="Enter your full name"
+              placeholder="Enter your first name"
+            />
+          </div>
+          <div>
+            <label className="text-white/80 font-light flex items-center gap-2 mb-2">
+              Last Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={tempFormData.lastName}
+              onChange={onTempChange}
+              className="w-full bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 text-white placeholder-white/50 focus:outline-none focus:border-white/40 transition-colors text-sm sm:text-base"
+              placeholder="Enter your last name"
             />
           </div>
           <div>
@@ -369,7 +376,7 @@ const DeliveryInfo = memo(
             Estimated Delivery
           </div>
           <div className="text-green-300 font-light text-xs sm:text-sm">
-            March 12 - March 14, 2025
+            3-5 business days
           </div>
         </div>
       </div>
@@ -378,64 +385,70 @@ const DeliveryInfo = memo(
 );
 
 const CheckoutPage = () => {
-  const [cartItems, setCartItems] = useState(() => [
-    {
-      id: 1,
-      name: "Premium Zip-Up Jacket",
-      color: "Silver",
-      sku: "JKT-PRM-SLV-2025",
-      price: 199.0,
-      quantity: 1,
-      image: "/products/jacket1.png",
-    },
-    {
-      id: 2,
-      name: "Premium Zip-Up Jacket",
-      color: "White",
-      sku: "JKT-PRM-WHT-2025",
-      price: 199.0,
-      quantity: 1,
-      image: "/products/jacket2.png",
-    },
-  ]);
-
+  const navigate = useNavigate();
+  const { cart,removeFromCart } = useCartStore();
+  const [cartItems, setCartItems] = useState([]);
+  const [user, setUser] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [isEditingDelivery, setIsEditingDelivery] = useState(false);
-
-  const [formData, setFormData] = useState(() => ({
-    name: "John Doe",
-    email: "john.doe@gmail.com",
-    address: "2119 Park Dr, Richmond, Virginia 23224",
-    zipCode: "23224",
-    phone: "+1 804-359-1787",
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    zipCode: "",
     cardHolderName: "",
-    couponCode: "",
-  }));
-
+  });
   const [tempFormData, setTempFormData] = useState(formData);
 
-  // Memoized calculations
-  const summary = useMemo(() => {
-    const subtotal = cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
-    const shipping = subtotal > 100 ? 0 : 25;
-    const tax = subtotal * 0.08;
-    const discount = formData.couponCode === "PREMIUM10" ? subtotal * 0.1 : 0;
-    const total = subtotal + shipping + tax - discount;
-
-    return {
-      subtotal,
-      shipping,
-      tax,
-      total,
-      discount,
-      itemCount: cartItems.reduce((total, item) => total + item.quantity, 0),
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) {
+          navigate("/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      }
     };
-  }, [cartItems, formData.couponCode]);
+    checkAuthentication();
+  }, [navigate]);
 
-  // Handlers
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/userData`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+          setFormData({
+            firstName: data.user.firstName || "",
+            lastName: data.user.lastName || "",
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+            address: data.user.address || "",
+            zipCode: data.user.zipCode || "",
+            cardHolderName: "",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+    getUserData();
+  }, []);
+
+  useEffect(() => {
+    if (cart && Array.isArray(cart)) {
+      setCartItems(cart);
+    }
+  }, [cart]);
+
   const updateQuantity = useCallback((id, newQuantity) => {
     if (newQuantity < 1) return;
     setCartItems((prev) =>
@@ -447,6 +460,7 @@ const CheckoutPage = () => {
 
   const removeItem = useCallback((id) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
+    removeFromCart(id)
   }, []);
 
   const handleInputChange = useCallback((e) => {
@@ -466,7 +480,8 @@ const CheckoutPage = () => {
 
   const saveDeliveryInfo = useCallback(() => {
     if (
-      !tempFormData.name ||
+      !tempFormData.firstName ||
+      !tempFormData.lastName ||
       !tempFormData.email ||
       !tempFormData.address ||
       !tempFormData.zipCode ||
@@ -491,11 +506,6 @@ const CheckoutPage = () => {
     setIsEditingDelivery(false);
   }, [formData]);
 
-  const applyCoupon = useCallback(() => {
-    console.log("Applying coupon:", formData.couponCode);
-  }, [formData.couponCode]);
-
-  // Payment options
   const paymentOptions = useMemo(
     () => [
       { key: "cod", icon: DollarSign, label: "Cash on Delivery" },
@@ -510,27 +520,46 @@ const CheckoutPage = () => {
     paymentMethod === "credit" || paymentMethod === "paypal";
   const isOrderDisabled = cartItems.length === 0;
 
-  // Pre-calculate formatted values
-  const formattedSummary = useMemo(
-    () => ({
-      subtotal: currencyFormatter.format(summary.subtotal),
-      shipping:
-        summary.shipping === 0
-          ? "Free"
-          : currencyFormatter.format(summary.shipping),
-      tax: currencyFormatter.format(summary.tax),
-      total: currencyFormatter.format(summary.total),
-      discount:
-        summary.discount > 0
-          ? currencyFormatter.format(summary.discount)
-          : null,
-    }),
-    [summary]
-  );
+  const handlePlaceOrder = async () => {
+    if (isOrderDisabled) return;
+
+    if (showCardHolderField && !formData.cardHolderName) {
+      alert("Please enter card holder name");
+      return;
+    }
+
+    try {
+      const orderData = {
+        items: cartItems,
+        deliveryInfo: formData,
+        paymentMethod,
+        total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      };
+
+      // Replace with your actual API endpoint
+      const res = await fetch(`${API_URL}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(orderData),
+      });
+
+      if (res.ok) {
+        alert("Order placed successfully! You will receive a confirmation email shortly.");
+        navigate("/orders");
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Order placement failed:", error);
+      alert("An error occurred while placing your order. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900 relative">
-      {/* Simplified background effects */}
       <div
         className="fixed inset-0 opacity-10 pointer-events-none bg-repeat mix-blend-multiply"
         style={{
@@ -540,7 +569,6 @@ const CheckoutPage = () => {
       />
 
       <div className="relative z-10 container mx-auto px-4 py-6 sm:px-6 sm:py-12 max-w-7xl">
-        {/* Header */}
         <div className="mb-8 sm:mb-16 text-center">
           <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6">
             <span className="text-white/60 text-xs sm:text-sm font-light tracking-widest uppercase bg-gradient-to-r from-white/10 to-white/5 px-4 py-2 sm:px-6 sm:py-3 rounded-full backdrop-blur-sm border border-white/20">
@@ -556,9 +584,7 @@ const CheckoutPage = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6 sm:gap-12 lg:gap-16">
-          {/* Left Column */}
           <div className="space-y-6 sm:space-y-8">
-            {/* Cart Items */}
             <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl">
               <div className="flex items-center justify-between mb-6 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl font-light text-white">
@@ -589,7 +615,6 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Delivery Information */}
             <DeliveryInfo
               formData={formData}
               tempFormData={tempFormData}
@@ -601,88 +626,7 @@ const CheckoutPage = () => {
             />
           </div>
 
-          {/* Right Column */}
           <div className="space-y-6 sm:space-y-8">
-            {/* Order Summary */}
-            <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl">
-              <h2 className="text-2xl sm:text-3xl font-light text-white mb-6 sm:mb-8">
-                Order Summary
-              </h2>
-
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex justify-between py-2 sm:py-3 border-b border-white/10">
-                  <span className="text-white/70 font-light text-sm sm:text-base">
-                    Subtotal ({summary.itemCount} items)
-                  </span>
-                  <span className="text-white font-light text-sm sm:text-base">
-                    {formattedSummary.subtotal}
-                  </span>
-                </div>
-
-                <div className="flex justify-between py-2 sm:py-3 border-b border-white/10">
-                  <span className="text-white/70 font-light text-sm sm:text-base">
-                    Shipping
-                  </span>
-                  <span
-                    className={`font-light text-sm sm:text-base ${
-                      summary.shipping === 0 ? "text-green-400" : "text-white"
-                    }`}
-                  >
-                    {formattedSummary.shipping}
-                  </span>
-                </div>
-
-                <div className="flex justify-between py-2 sm:py-3 border-b border-white/10">
-                  <span className="text-white/70 font-light text-sm sm:text-base">
-                    Tax (8%)
-                  </span>
-                  <span className="text-white font-light text-sm sm:text-base">
-                    {formattedSummary.tax}
-                  </span>
-                </div>
-
-                {formattedSummary.discount && (
-                  <div className="flex justify-between py-2 sm:py-3 border-b border-white/10">
-                    <span className="text-green-400 font-light text-sm sm:text-base">
-                      Discount
-                    </span>
-                    <span className="text-green-400 font-light text-sm sm:text-base">
-                      -{formattedSummary.discount}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between py-4 sm:py-6 border-t border-white/20 mt-4 sm:mt-6">
-                  <span className="text-xl sm:text-2xl font-light text-white">
-                    Total
-                  </span>
-                  <span className="text-xl sm:text-2xl font-light text-white">
-                    {formattedSummary.total}
-                  </span>
-                </div>
-              </div>
-
-              {/* Coupon Code */}
-              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <input
-                  type="text"
-                  name="couponCode"
-                  placeholder="Enter coupon code"
-                  value={formData.couponCode}
-                  onChange={handleInputChange}
-                  className="flex-1 bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 text-white placeholder-white/50 focus:outline-none focus:border-white/40 transition-colors text-sm sm:text-base"
-                />
-                <button
-                  onClick={applyCoupon}
-                  className="px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-xl border border-white/30 text-white rounded-xl sm:rounded-2xl hover:from-white/30 hover:to-white/20 transition-colors shadow-lg text-sm sm:text-base"
-                  type="button"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-
-            {/* Payment Method */}
             <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl">
               <h2 className="text-2xl sm:text-3xl font-light text-white mb-6 sm:mb-8">
                 Payment Method
@@ -716,7 +660,6 @@ const CheckoutPage = () => {
               )}
             </div>
 
-            {/* Security Features */}
             <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex items-center gap-3">
@@ -763,7 +706,6 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Place Order Button */}
             <button
               className={`w-full py-4 sm:py-6 px-6 sm:px-8 text-lg sm:text-xl font-light rounded-2xl sm:rounded-3xl transition-all shadow-2xl ${
                 isOrderDisabled
@@ -772,19 +714,12 @@ const CheckoutPage = () => {
               } flex items-center justify-center gap-3`}
               disabled={isOrderDisabled}
               type="button"
-              onClick={() => {
-                if (!isOrderDisabled) {
-                  alert(
-                    "Order placed successfully! You will receive a confirmation email shortly."
-                  );
-                }
-              }}
+              onClick={handlePlaceOrder}
             >
               <Check className="w-5 h-5 sm:w-6 sm:h-6" />
-              Place Order {!isOrderDisabled && `• ${formattedSummary.total}`}
+              Place Order
             </button>
 
-            {/* Additional Info */}
             <div className="text-center text-white/60 font-light text-xs sm:text-sm">
               By placing this order, you agree to our{" "}
               <span className="text-white/80 hover:text-white cursor-pointer transition-colors">
