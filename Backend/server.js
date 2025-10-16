@@ -13,13 +13,13 @@ const User = require("./models/Users");
 dotenv.config();
 
 const app = express();
-
+app.set("trust proxy", "1");
 // Connect to Database
 connectDB();
 
 // Middleware
 app.use(express.json());
-app.set("trust proxy", "1");
+
 
 // ✅ CORS - Allow both localhost AND production frontend
 const allowedOrigins = [
