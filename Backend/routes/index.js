@@ -95,7 +95,7 @@ router.post("/loginUser", (req, res, next) => {
 
         // ✅ Log for debugging
         console.log("✅ User logged in:", safeUser.email);
-        console.log("✅ Session ID:", req.sessionID);
+
         console.log("✅ Session:", req.session);
         
         res.status(200).json({ 
