@@ -6,6 +6,7 @@ const passport = require("passport");
 const mongoose = require("mongoose");
 const connectDB = require("./db");
 const MongoStore = require("connect-mongo");
+const cookieParser = require("cookie-parser"); // ✅ ADD THIS
 
 // Routers & Models
 const indexRouter = require("./routes/index");
@@ -14,18 +15,20 @@ const User = require("./models/Users");
 dotenv.config();
 
 const app = express();
-app.set("trust proxy", "1");
+app.set("trust proxy", 1);
+
 // Connect to Database
 connectDB();
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser()); // ✅ ADD THIS - Must be BEFORE session middleware
 
-// ✅ CORS - Allow both localhost AND production frontend
+// CORS Configuration
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://veloura-rose.vercel.app", //
-  process.env.FRONTEND_URL, // Set this in Vercel environment variables
+  "https://veloura-rose.vercel.app",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
@@ -34,11 +37,11 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["set-cookie"], // ✅ Add this
+    exposedHeaders: ["set-cookie"],
   })
 );
-// ✅ Express Session - Use environment variable for secret
 
+// Session Configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -50,23 +53,24 @@ app.use(
       ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production", // false for local (HTTP), true for prod (HTTPS)
+      secure: process.env.NODE_ENV === "production", // ✅ Changed back for local dev
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "lax" for local, "none" for prod
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ Changed back
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
-// ✅ Initialize Passport
+
+// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ Configure Passport using the User model
+// Configure Passport using the User model
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Health Check Route (must come before other routes)
+// Health Check Route
 app.get("/", (req, res) => {
   res.json({
     message: "Server is running 🚀",
@@ -74,16 +78,17 @@ app.get("/", (req, res) => {
   });
 });
 
+// Debug Middleware
 app.use((req, res, next) => {
-  console.log("🔍 Headers:", req.headers);
-  console.log("🍪 Cookies:", req.cookies);
+  console.log("🔍 Headers:", req.headers.cookie);
+  console.log("🍪 Parsed Cookies:", req.cookies); // Should now show cookies
   console.log("📝 Session ID:", req.sessionID);
-  console.log("👤 Session:", req.session);
   console.log("✅ Authenticated:", req.isAuthenticated?.());
   next();
 });
+
 // API Routes
-app.use("/", indexRouter); // Changed from "/" to "/api" for better structure
+app.use("/", indexRouter);
 
 // 404 Handler
 app.use((req, res) => {
