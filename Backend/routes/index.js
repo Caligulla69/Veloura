@@ -125,9 +125,7 @@ router.get("/logout", (req, res, next) => {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        domain: process.env.NODE_ENV === "production" 
-          ? process.env.COOKIE_DOMAIN 
-          : undefined
+        
       });
 
       res.status(200).json({ message: "Logged out successfully" });

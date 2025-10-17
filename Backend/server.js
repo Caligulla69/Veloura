@@ -30,11 +30,13 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://veloura-rose.vercel.app"],
+    origin: allowedOrigins,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["set-cookie"], // ✅ Add this
   })
 );
-
 // ✅ Express Session - Use environment variable for secret
 
 app.use(
@@ -45,17 +47,16 @@ app.use(
     saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URL,
-      ttl: 24 * 60 * 60, // 1 day
+      ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production", // false for local (HTTP), true for prod (HTTPS)
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "lax" for local, "none" for prod
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
-
 // ✅ Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
@@ -74,11 +75,13 @@ app.get("/", (req, res) => {
 });
 
 app.use((req, res, next) => {
-  console.log("🧠 Cookie received:", req.headers.cookie);
-  console.log("Authenticated?", req.isAuthenticated?.());
+  console.log("🔍 Headers:", req.headers);
+  console.log("🍪 Cookies:", req.cookies);
+  console.log("📝 Session ID:", req.sessionID);
+  console.log("👤 Session:", req.session);
+  console.log("✅ Authenticated:", req.isAuthenticated?.());
   next();
 });
-
 // API Routes
 app.use("/", indexRouter); // Changed from "/" to "/api" for better structure
 
