@@ -73,20 +73,44 @@ router.post("/loginUser", (req, res, next) => {
       return res.status(401).json({ message: info?.message || "Invalid credentials" });
 
     req.logIn(user, (err) => {
-      if (err) return next(err);
-      const safeUser = {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
+      if (err) {
+        console.error("Login error:", err);
+        return next(err);
+      }
+      
+      // ✅ CRITICAL: Explicitly save session before responding
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("Session save error:", saveErr);
+          return res.status(500).json({ message: "Session creation failed" });
+        }
+
+        const safeUser = {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+        };
+
+        // ✅ Log for debugging
+        console.log("✅ User logged in:", safeUser.email);
+        console.log("✅ Session ID:", req.sessionID);
+        console.log("✅ Session:", req.session);
         
-      };
-      res.status(200).json({ message: "Login successful", user: safeUser });
+        res.status(200).json({ 
+          message: "Login successful", 
+          user: safeUser,
+          // Remove in production, just for debugging:
+          debug: {
+            sessionID: req.sessionID,
+            hasSession: !!req.session
+          }
+        });
+      });
     });
   })(req, res, next);
 });
-
 router.get("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
@@ -262,10 +286,10 @@ function isLoggedIn(req, res, next) {
 
 router.get("/checkAuth", (req, res) => {
   if (req.isAuthenticated()) {
-    res.status(200).json({ isLoggedIn: true, user: req.user });
+    res.json({ isLoggedIn: true, user: req.user });
   } else {
-    res.status(401).json({ isLoggedIn: false });
-  }
+    res.json({ isLoggedIn: false });
+  }
 });
 
 module.exports = router;
