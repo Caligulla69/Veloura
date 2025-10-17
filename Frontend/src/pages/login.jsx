@@ -1,4 +1,4 @@
-import { useAuthStore } from "../store/useAuthStore"; // adjust path if needed
+import { useAuthStore } from "../store/useAuthStore";
 import React, { useState } from "react";
 import {
   Eye,
@@ -9,7 +9,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import API_URL from "../utils/api";
 
 const PremiumLoginPage = () => {
@@ -27,83 +27,78 @@ const PremiumLoginPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState(false);
-  const {user}=useAuthStore;
+  const [errorMessage, setErrorMessage] = useState(""); // ✅ Added error state
+  
+  // ✅ Fixed: Call the hook with ()
+  const { user, setUser } = useAuthStore();
   const navigate = useNavigate();
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrorMessage(""); // Clear errors on input
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage("");
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+    try {
+      const endpoint = isLoginMode
+        ? `${API_URL}/loginUser`
+        : `${API_URL}/registerUser`;
 
-  const setUser = useAuthStore.getState().setUser; // access store function
+      const payload = isLoginMode
+        ? {
+            email: formData.email,
+            password: formData.password,
+          }
+        : {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            password: formData.password,
+          };
 
-  try {
-    const endpoint = isLoginMode
-      ? `${API_URL}/loginUser`
-      : `${API_URL}/registerUser`;
+      if (!isLoginMode && formData.password !== formData.confirmPassword) {
+        setErrorMessage("Passwords do not match!");
+        setIsLoading(false);
+        return;
+      }
 
-    const payload = isLoginMode
-      ? {
-          email: formData.email,
-          password: formData.password,
-        }
-      : {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-        };
+      // ✅ Using fetch with credentials: "include" is correct
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "include", // ✅ Critical - sends cookies
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!isLoginMode && formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "Something went wrong");
+
+      // ✅ Set user in Zustand
+      setUser(data.user);
+      console.log("User logged in:", data.user);
+
+      setActionSuccess(true);
+
+      // ✅ Navigate based on role
+      if (data.user.role === "admin") {
+        setTimeout(() => navigate("/adminDashboard"), 1500);
+      } else {
+        setTimeout(() => navigate("/dashboard"), 1500);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setErrorMessage(error.message);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) throw new Error(data.message || "Something went wrong");
-
-    // ✅ Set user in Zustand (so entire app knows user is logged in)
-    setUser(data.user);
-    console.log(data.user);
-    
-    if(data.user.role==="admin"){
-      console.log("heklllo");
-      
-      setTimeout(() => navigate("/adminDashboard"), 1500);
-      
-    }
-    else{
-
-      setTimeout(() => navigate("/dashboard"), 1500);
-    }
-    
-    setActionSuccess(true);
-    setTimeout(() => setActionSuccess(false), 3000);
-
-    // Redirect
-  } catch (error) {
-    console.error("Error:", error);
-    alert(error.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const toggleMode = () => {
     setIsLoginMode(!isLoginMode);
@@ -117,6 +112,7 @@ const handleSubmit = async (e) => {
     });
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setErrorMessage("");
   };
 
   return (
@@ -149,7 +145,7 @@ const handleSubmit = async (e) => {
 
         {/* Auth Form */}
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 shadow-2xl">
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Fields - Only for Registration */}
             {!isLoginMode && (
               <div className="grid grid-cols-2 gap-4">
@@ -361,15 +357,22 @@ const handleSubmit = async (e) => {
                   </div>
                   <span className="text-white/70 font-light text-sm leading-relaxed">
                     I agree to the{" "}
-                    <button className="text-white hover:text-white/80 underline underline-offset-2 transition-colors">
+                    <button type="button" className="text-white hover:text-white/80 underline underline-offset-2 transition-colors">
                       Terms of Service
                     </button>{" "}
                     and{" "}
-                    <button className="text-white hover:text-white/80 underline underline-offset-2 transition-colors">
+                    <button type="button" className="text-white hover:text-white/80 underline underline-offset-2 transition-colors">
                       Privacy Policy
                     </button>
                   </span>
                 </label>
+              </div>
+            )}
+
+            {/* ✅ Error Message */}
+            {errorMessage && (
+              <div className="bg-red-500/20 border border-red-400/30 text-red-400 p-4 rounded-2xl backdrop-blur-sm text-center">
+                {errorMessage}
               </div>
             )}
 
@@ -385,8 +388,7 @@ const handleSubmit = async (e) => {
 
             {/* Submit Button */}
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={isLoading}
               className="w-full bg-white text-black py-4 px-8 rounded-2xl font-medium hover:bg-gray-100 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
             >
@@ -448,7 +450,7 @@ const handleSubmit = async (e) => {
                 Facebook
               </button>
             </div>
-          </div>
+          </form>
         </div>
 
         {/* Mode Toggle Link */}

@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const passport = require("passport");
 const mongoose = require("mongoose");
 const connectDB = require("./db");
@@ -13,27 +14,25 @@ const User = require("./models/Users");
 dotenv.config();
 
 const app = express();
-app.set("trust proxy", "1");
+app.set("trust proxy", 1);
+
 // Connect to Database
 connectDB();
 
 // Middleware
 app.use(express.json());
 
-
-// ✅ CORS - Allow both localhost AND production frontend
+// ✅ CORS Configuration
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://veloura-rose.vercel.app", //
-  process.env.FRONTEND_URL // Set this in Vercel environment variables
+  "https://veloura-rose.vercel.app",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or Postman)
       if (!origin) return callback(null, true);
-      
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
@@ -44,17 +43,26 @@ app.use(
   })
 );
 
-// ✅ Express Session - Use environment variable for secret
+// ✅ MongoDB Session Store (persists sessions across serverless instances)
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your-secure-secret-here",
+    secret: "helloMydesiNigga1956",
+    name: "connect.sid",
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URL,
+      touchAfter: 24 * 3600, // Lazy update session (once per 24h)
+      crypto: {
+        secret: "helloMydesiNigga1956",
+      },
+    }),
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      secure: process.env.NODE_ENV === "production", // true in production
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ CRITICAL for cross-origin
+    },
   })
 );
 
@@ -67,16 +75,16 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Health Check Route (must come before other routes)
+// Health Check Route
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     message: "Server is running 🚀",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
 // API Routes
-app.use("/", indexRouter); // Changed from "/" to "/api" for better structure
+app.use("/", indexRouter);
 
 // 404 Handler
 app.use((req, res) => {
@@ -95,5 +103,4 @@ if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
-// Export for Vercel
 module.exports = app;
