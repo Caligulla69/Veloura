@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
 const multer = require("multer");
+const fs = require("fs");
 const { v2: cloudinary } = require("cloudinary");
 
 const UserModel = require("../models/Users");
@@ -21,8 +23,12 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ❌ REMOVED: Passport configuration (already in server.js)
-// This was causing duplicate configuration and session issues
+// -----------------------------
+// 🔐 PASSPORT CONFIGURATION
+// -----------------------------
+passport.use(new LocalStrategy(UserModel.authenticate()));
+passport.serializeUser(UserModel.serializeUser());
+passport.deserializeUser(UserModel.deserializeUser());
 
 // -----------------------------
 // 🏠 BASIC ROUTE
@@ -68,28 +74,15 @@ router.post("/loginUser", (req, res, next) => {
 
     req.logIn(user, (err) => {
       if (err) return next(err);
-      
-      // ✅ Save session explicitly
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session error" });
-        }
+      const safeUser = {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
         
-        const safeUser = {
-          _id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          role: user.role,
-        };
-        
-        res.status(200).json({ 
-          message: "Login successful", 
-          user: safeUser,
-          sessionID: req.sessionID // ✅ For debugging
-        });
-      });
+      };
+      res.status(200).json({ message: "Login successful", user: safeUser });
     });
   })(req, res, next);
 });
@@ -98,15 +91,19 @@ router.get("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
 
+    // Destroy the session completely
     req.session.destroy((err) => {
       if (err) return next(err);
 
-      // ✅ Clear cookie - let domain default in production
+      // ✅ Clear the cookie with ALL necessary attributes
       res.clearCookie("connect.sid", {
         path: "/",
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain: process.env.NODE_ENV === "production" 
+          ? process.env.COOKIE_DOMAIN 
+          : undefined
       });
 
       res.status(200).json({ message: "Logged out successfully" });
@@ -114,62 +111,23 @@ router.get("/logout", (req, res, next) => {
   });
 });
 
-// ✅ Enhanced auth check
-router.get("/checkAuth", (req, res) => {
-  if (req.isAuthenticated()) {
-    const safeUser = {
-      _id: req.user._id,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      email: req.user.email,
-      role: req.user.role,
-    };
-    res.json({ isLoggedIn: true, user: safeUser });
-  } else {
-    res.json({ isLoggedIn: false, user: null });
-  }
-});
-
-// ✅ Debug route (remove in production after fixing)
-router.get("/debug/session", (req, res) => {
-  res.json({
-    sessionID: req.sessionID,
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user ? {
-      id: req.user._id,
-      email: req.user.email
-    } : null,
-    hasSession: !!req.session,
-    cookie: req.session?.cookie
-  });
-});
-
 router.get("/userData", isLoggedIn, async (req, res) => {
-  try {
-    const user = await UserModel.findById(req.user._id).populate("orders");
-    res.json({ user });
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    res.status(500).json({ message: "Error fetching user data" });
-  }
+  const user = await UserModel.findById(req.user._id).populate("orders");
+  res.json({ user });
 });
 
 // Get all users
 router.get("/users", async (req, res) => {
-  try {
-    const users = await UserModel.find({ role: "customer" });
-    res.json(users);
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Error fetching users" });
-  }
+  const users = await UserModel.find({role:"customer"});
+  res.json(users);
 });
 
 // Update user status
 router.put("/users/:id/status", async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status } = req.body; // e.g. { status: "disabled" }
 
+    // Validate input
     if (!status) {
       return res.status(400).json({ message: "Status is required" });
     }
@@ -177,7 +135,7 @@ router.put("/users/:id/status", async (req, res) => {
     const user = await UserModel.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { new: true } // return the updated document
     );
 
     if (!user) {
@@ -194,20 +152,18 @@ router.put("/users/:id/status", async (req, res) => {
   }
 });
 
+
 // -----------------------------
 // 🛍️ PRODUCT ROUTES
 // -----------------------------
 
+// Get all products
 router.get("/products", async (req, res) => {
-  try {
-    const products = await ProductModel.find();
-    res.json(products);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({ message: "Error fetching products" });
-  }
+  const products = await ProductModel.find();
+  res.json(products);
 });
 
+// Get single product
 router.get("/products/:id", async (req, res) => {
   try {
     const product = await ProductModel.findById(req.params.id);
@@ -223,6 +179,7 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
     let imageUrl = null;
 
     if (req.file) {
+      // ✅ Upload buffer directly to Cloudinary using a stream
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: "ecommerce_products" },
@@ -231,7 +188,7 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
             else resolve(result);
           }
         );
-        stream.end(req.file.buffer);
+        stream.end(req.file.buffer); // send the file buffer
       });
 
       imageUrl = uploadResult.secure_url;
@@ -256,6 +213,9 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
     res.status(500).json({ message: "Error adding product", error: err.message });
   }
 });
+
+
+
 
 // -----------------------------
 // 📦 ORDER ROUTES
@@ -288,21 +248,24 @@ router.post("/order", isLoggedIn, async (req, res) => {
 });
 
 router.get("/orders", isLoggedIn, async (req, res) => {
-  try {
-    const orders = await OrderModel.find({ user: req.user._id }).populate("items.product");
-    res.json(orders);
-  } catch (error) {
-    console.error("Error fetching orders:", error);
-    res.status(500).json({ message: "Error fetching orders" });
-  }
+  const orders = await OrderModel.find({ user: req.user._id }).populate("items.product");
+  res.json(orders);
 });
 
 // -----------------------------
-// MIDDLEWARE
+// MIDDLEWARES
 // -----------------------------
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.status(401).json({ message: "Unauthorized" });
 }
+
+router.get("/checkAuth", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ isLoggedIn: true, user: req.user });
+  } else {
+    res.json({ isLoggedIn: false });
+  }
+});
 
 module.exports = router;
