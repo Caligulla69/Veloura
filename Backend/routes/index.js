@@ -262,10 +262,10 @@ function isLoggedIn(req, res, next) {
 
 router.get("/checkAuth", (req, res) => {
   if (req.isAuthenticated()) {
-    res.json({ isLoggedIn: true, user: req.user });
+    res.status(200).json({ isLoggedIn: true, user: req.user });
   } else {
-    res.json({ isLoggedIn: false });
-  }
+    res.status(401).json({ isLoggedIn: false });
+  }
 });
 
 module.exports = router;
