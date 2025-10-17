@@ -5,6 +5,8 @@ const session = require("express-session");
 const passport = require("passport");
 const mongoose = require("mongoose");
 const connectDB = require("./db");
+const morgan = require("morgan");
+const connectMongo = require("connect-mongo");
 
 // Routers & Models
 const indexRouter = require("./routes/index");
@@ -13,6 +15,7 @@ const User = require("./models/Users");
 dotenv.config();
 
 const app = express();
+app.use(morgan("dev"));
 
 // Connect to Database
 connectDB();
@@ -25,7 +28,7 @@ app.set("trust proxy", "1");
 const allowedOrigins = [
   "http://localhost:5173",
   "https://veloura-rose.vercel.app", //
-  process.env.FRONTEND_URL // Set this in Vercel environment variables
+  process.env.FRONTEND_URL, // Set this in Vercel environment variables
 ].filter(Boolean);
 
 app.use(
@@ -43,6 +46,12 @@ app.use(
     credentials: true,
   })
 );
+const store = connectMongo.create({
+  mongoUrl: process.env.MONGO_URL,
+  ttl: 7 * 24 * 60 * 60,
+  autoRemove: "interval",
+  autoRemoveInterval: 10,
+});
 
 // ✅ Express Session - Use environment variable for secret
 app.use(
@@ -50,12 +59,12 @@ app.use(
     secret: process.env.SESSION_SECRET || "your-secure-secret-here",
     resave: false,
     saveUninitialized: false,
+    store: store,
     cookie: {
-      secure: false, // Use secure cookies in production
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
   })
 );
 
@@ -70,9 +79,9 @@ passport.deserializeUser(User.deserializeUser());
 
 // Health Check Route (must come before other routes)
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     message: "Server is running 🚀",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -96,4 +105,4 @@ if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
-module.exports =app
+module.exports = app;
