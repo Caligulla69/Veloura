@@ -20,12 +20,11 @@ connectDB();
 // Middleware
 app.use(express.json());
 
-
 // ✅ CORS - Allow both localhost AND production frontend
 const allowedOrigins = [
   "http://localhost:5173",
   "https://veloura-rose.vercel.app", //
-  process.env.FRONTEND_URL // Set this in Vercel environment variables
+  process.env.FRONTEND_URL, // Set this in Vercel environment variables
 ].filter(Boolean);
 
 app.use(
@@ -33,7 +32,7 @@ app.use(
     origin: function (origin, callback) {
       // Allow requests with no origin (like mobile apps or Postman)
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
@@ -51,10 +50,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    },
   })
 );
 
@@ -69,9 +69,9 @@ passport.deserializeUser(User.deserializeUser());
 
 // Health Check Route (must come before other routes)
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     message: "Server is running 🚀",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
