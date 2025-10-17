@@ -252,7 +252,7 @@ router.get("/orders", isLoggedIn, async (req, res) => {
   res.json(orders);
 });
 
-
+// -----------------------------
 // MIDDLEWARES
 // -----------------------------
 function isLoggedIn(req, res, next) {

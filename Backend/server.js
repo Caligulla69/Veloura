@@ -13,13 +13,13 @@ const User = require("./models/Users");
 dotenv.config();
 
 const app = express();
-app.set("trust proxy", "1");
+
 // Connect to Database
 connectDB();
 
 // Middleware
 app.use(express.json());
-
+app.set("trust proxy", "1");
 
 // ✅ CORS - Allow both localhost AND production frontend
 const allowedOrigins = [
@@ -33,7 +33,7 @@ app.use(
     origin: function (origin, callback) {
       // Allow requests with no origin (like mobile apps or Postman)
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
@@ -95,5 +95,4 @@ if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
-
-module.exports = app;
+module.exports =app
