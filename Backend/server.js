@@ -28,14 +28,12 @@ const allowedOrigins = [
   process.env.FRONTEND_URL, // Set this in Vercel environment variables
 ].filter(Boolean);
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://veloura-rose.vercel.app"
-  ],
-  credentials: true,
-}));
-
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://veloura-rose.vercel.app"],
+    credentials: true,
+  })
+);
 
 // ✅ Express Session - Use environment variable for secret
 
@@ -43,14 +41,18 @@ app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
+    name: "veloura_session",
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URL }),
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URL,
+      ttl: 24 * 60 * 60, // 1 day
+    }),
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000
-    }
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    },
   })
 );
 
@@ -69,6 +71,12 @@ app.get("/", (req, res) => {
     message: "Server is running 🚀",
     timestamp: new Date().toISOString(),
   });
+});
+
+app.use((req, res, next) => {
+  console.log("🧠 Cookie received:", req.headers.cookie);
+  console.log("Authenticated?", req.isAuthenticated?.());
+  next();
 });
 
 // API Routes

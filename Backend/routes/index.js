@@ -120,7 +120,7 @@ router.get("/logout", (req, res, next) => {
       if (err) return next(err);
 
       // ✅ Clear the cookie with ALL necessary attributes
-      res.clearCookie("connect.sid", {
+      res.clearCookie("veloura_session", {
         path: "/",
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
