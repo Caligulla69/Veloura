@@ -5,6 +5,7 @@ const session = require("express-session");
 const passport = require("passport");
 const mongoose = require("mongoose");
 const connectDB = require("./db");
+const MongoStore = require("connect-mongo");
 
 // Routers & Models
 const indexRouter = require("./routes/index");
@@ -27,34 +28,29 @@ const allowedOrigins = [
   process.env.FRONTEND_URL, // Set this in Vercel environment variables
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or Postman)
-      if (!origin) return callback(null, true);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://veloura-rose.vercel.app"
+  ],
+  credentials: true,
+}));
 
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
 
 // ✅ Express Session - Use environment variable for secret
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your-secure-secret-here",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
       sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000,
-    },
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000
+    }
   })
 );
 
