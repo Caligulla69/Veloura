@@ -227,7 +227,7 @@ const PremiumFooter = () => {
               ></div>
               
               <h2 className="relative text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extralight text-white/10 tracking-[0.2em] sm:tracking-[0.3em] select-none mb-6 sm:mb-8 hover:text-white/20 transition-all duration-1000 hover:scale-105 cursor-default">
-                BRAND NAME
+                Veloura
               </h2>
               
               {/* Animated divider line */}
@@ -235,7 +235,7 @@ const PremiumFooter = () => {
               
               {/* Copyright */}
               <p className="text-white/40 text-xs sm:text-sm tracking-wider sm:tracking-widest uppercase font-light px-4 hover:text-white/60 transition-colors duration-300">
-                © 2025 BRAND NAME Atelier • All Rights Reserved
+                © 2025 Veloura Atelier • All Rights Reserved
               </p>
             </div>
           </div>

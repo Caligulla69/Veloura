@@ -14,13 +14,29 @@ import {
 } from "lucide-react";
 import PremiumCarousel from "../../components/ui/card-carousel";
 import { Link } from "react-router-dom";
-import API_URL from "../../utils/api";
+
 // Enhanced Premium Carousel Component
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -100; // Offset for fixed navbar
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      
+      window.scrollTo({
+        top: y,
+        behavior: 'smooth'
+      });
+    }
+    
+    // Close mobile menu if open
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -32,6 +48,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  
   
 
   return (
@@ -59,7 +76,7 @@ const Header = () => {
               <div className="relative group">
                 <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-white to-gray-200 rounded-lg flex items-center justify-center shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-6">
                   <span className="font-bold text-black text-base sm:text-lg tracking-tight">
-                    L
+                    V
                   </span>
                 </div>
                 <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-yellow-400 rounded-full animate-ping"></div>
@@ -67,21 +84,21 @@ const Header = () => {
               </div>
               <div className="hidden sm:block">
                 <span className="text-white font-light text-xl sm:text-2xl tracking-widest uppercase transform transition-all duration-700 hover:tracking-[0.5em]">
-                  Brand
+                  Veloura
                 </span>
                 <div className="text-white/60 text-xs tracking-widest uppercase transform transition-all duration-500 hover:text-white/80">
-                  Name
+                  Maison de Couture
                 </div>
               </div>
             </div>
 
             {/* Enhanced Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-8 xl:space-x-12">
-              {["Collections", "Atelier", "Exclusives", "Heritage"].map(
+              {["Essence", "Heritage", "Collections", "Atelier ", ].map(
                 (item, index) => (
-                  <a
+                  <button
                     key={item}
-                    href="#"
+                    onClick={() => scrollToSection(item)}
                     className={`group relative text-white ${
                       index === 0
                         ? "font-normal"
@@ -96,7 +113,7 @@ const Header = () => {
                     {item}
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-gradient-to-r from-white to-yellow-200 transition-all duration-500 group-hover:w-full"></span>
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-white/20 blur-sm transition-all duration-500 group-hover:w-full"></span>
-                  </a>
+                  </button>
                 )
               )}
             </div>
@@ -161,11 +178,11 @@ const Header = () => {
         >
           <div className="bg-black/95 backdrop-blur-md border-t border-white/10">
             <div className="container mx-auto px-4 sm:px-6 py-6 space-y-4 sm:space-y-6">
-              {["Collections", "Atelier", "Exclusives", "Heritage"].map(
+              {["Essence", "Heritage", "Collections", "Atelier ", ].map(
                 (item, index) => (
-                  <a
+                  <button
                     key={item}
-                    href="#"
+                    onClick={() => scrollToSection(item)}
                     className={`block text-white text-lg font-light tracking-wide transition-all duration-700 transform hover:text-yellow-200 hover:translate-x-2 ${
                       isMenuOpen
                         ? "translate-y-0 opacity-100"
@@ -174,7 +191,7 @@ const Header = () => {
                     style={{ transitionDelay: `${(index + 1) * 100}ms` }}
                   >
                     {item}
-                  </a>
+                  </button>
                 )
               )}
 
@@ -189,9 +206,9 @@ const Header = () => {
                 <button className="p-2 text-white/80 hover:text-white transition-all duration-300 hover:bg-white/10 rounded-full self-start transform hover:scale-110">
                   <Search className="w-5 h-5" />
                 </button>
-                <button className="text-white/80 hover:text-white font-light tracking-wide transition-all duration-300 text-left transform hover:translate-x-2">
+                <Link to="/login" className="text-white/80 hover:text-white font-light tracking-wide transition-all duration-300 text-left transform hover:translate-x-2">
                   Sign In
-                </button>
+                </Link>
               </div>
 
               <div
