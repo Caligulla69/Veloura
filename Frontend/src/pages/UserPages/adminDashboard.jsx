@@ -7,99 +7,99 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Settings,
   LogOut,
   Search,
-  Filter,
-  Download,
-  Upload,
   Edit3,
   Trash2,
   Plus,
   Eye,
-  MoreVertical,
-  Calendar,
   ChevronRight,
   Menu,
-  X,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-  BarChart3,
-  PieChart,
-  Activity,
-  Star,
-  MessageSquare,
   Bell,
-  RefreshCw,
   Home,
   ShieldOff,
   ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
-import {checkAuth} from "../../utils/checkAuth";
+import { checkAuth } from "../../utils/checkAuth";
 import { logout } from "../../utils/logout";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const redirect = useNavigate();
+
   useEffect(() => {
     const fetchProducts = async () => {
+      const isAuthenticated = await checkAuth();
 
-      const isAuthenticated= await checkAuth()
-      console.log(isAuthenticated);
-      
-      if(!isAuthenticated){
-        redirect('/login')
-        return
+      if (!isAuthenticated) {
+        redirect("/login");
+        return;
       }
       try {
         const res = await fetch(`${API_URL}/products`, {
-          credentials: "include", // optional if authentication needed
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error("Failed to fetch products");
 
         const data = await res.json();
-        console.log(data);
-
         setProducts(data);
       } catch (err) {
-        throw new Error(err.message);
+        console.error("Error fetching products:", err);
       }
     };
 
     fetchProducts();
-  }, []);
+  }, [redirect]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await fetch(`${API_URL}/users`, {
-          credentials: "include", // optional if authentication needed
+          credentials: "include",
         });
 
-        if (!res.ok) throw new Error("Failed to fetch products");
+        if (!res.ok) throw new Error("Failed to fetch users");
 
         const data = await res.json();
-
         setUsers(data);
       } catch (err) {
-        throw new Error(err.message);
+        console.error("Error fetching users:", err);
       }
     };
 
     fetchUsers();
   }, []);
- 
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`${API_URL}/getOrders`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch orders");
+
+        const data = await res.json();
+        setOrders(data);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   const handleToggleUserStatus = async (id, currentStatus) => {
     try {
@@ -118,9 +118,7 @@ const AdminDashboard = () => {
       }
 
       const updatedUser = await res.json();
-      console.log("Response from backend:", updatedUser);
 
-      // Update UI - use newStatus directly since we know what we sent
       setUsers((prev) =>
         prev.map((u) => (u._id === id ? { ...u, status: newStatus } : u))
       );
@@ -130,57 +128,23 @@ const AdminDashboard = () => {
     }
   };
 
-  // Analytics data
-  const analyticsData = useMemo(
-    () => ({
-      totalRevenue: 145890.5,
+  const analyticsData = useMemo(() => {
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const totalOrders = orders.length;
+    const totalCustomers = users.length;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    return {
+      totalRevenue: totalRevenue,
       revenueChange: 12.5,
-      totalOrders: 1247,
+      totalOrders: totalOrders,
       ordersChange: 8.3,
-      totalCustomers: 3892,
+      totalCustomers: totalCustomers,
       customersChange: 15.7,
-      avgOrderValue: 116.98,
+      avgOrderValue: avgOrderValue,
       avgChange: 4.2,
-    }),
-    []
-  );
-
-  console.log(users);
-
-  const [orders] = useState([
-    {
-      id: "ORD-2024-1247",
-      customer: "Alexandra Sterling",
-      items: 3,
-      total: 1299.99,
-      status: "delivered",
-      date: "2024-08-20",
-    },
-    {
-      id: "ORD-2024-1246",
-      customer: "Michael Chen",
-      items: 2,
-      total: 899.99,
-      status: "shipped",
-      date: "2024-08-22",
-    },
-    {
-      id: "ORD-2024-1245",
-      customer: "Sarah Johnson",
-      items: 4,
-      total: 2199.99,
-      status: "pending",
-      date: "2024-08-24",
-    },
-    {
-      id: "ORD-2024-1244",
-      customer: "David Martinez",
-      items: 1,
-      total: 449.99,
-      status: "cancelled",
-      date: "2024-08-23",
-    },
-  ]);
+    };
+  }, [orders, users]);
 
   const tabs = [
     { id: "home", label: "Home", icon: Home },
@@ -195,24 +159,57 @@ const AdminDashboard = () => {
       active: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
       inactive: "text-gray-400 bg-gray-400/10 border-gray-400/20",
       delivered: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+      Delivered: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
       shipped: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+      Shipped: "text-blue-400 bg-blue-400/10 border-blue-400/20",
       pending: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
+      Pending: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
       cancelled: "text-red-400 bg-red-400/10 border-red-400/20",
+      Cancelled: "text-red-400 bg-red-400/10 border-red-400/20",
       "out-of-stock": "text-red-400 bg-red-400/10 border-red-400/20",
+      disabled: "text-red-400 bg-red-400/10 border-red-400/20",
     };
     return colors[status] || "text-gray-400 bg-gray-400/10 border-gray-400/20";
   }, []);
 
   const handleTabChange = useCallback((tabId) => {
     if (tabId === "logout") {
-
-      logout(redirect)
+      logout(redirect);
+      return;
     }
     if (tabId === "home") {
       redirect("/prodListing");
+      return;
     }
     setActiveTab(tabId);
     setSidebarOpen(false);
+  }, [redirect]);
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        setOrders(
+          orders.map((order) =>
+            order._id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+    }
+  };
+
+  const viewOrderDetails = useCallback((orderId) => {
+    setSelectedOrderId(orderId);
   }, []);
 
   const Sidebar = React.memo(({ className = "" }) => (
@@ -301,7 +298,7 @@ const AdminDashboard = () => {
           </p>
           <p className="text-white text-2xl lg:text-3xl font-light">
             {format === "currency"
-              ? `$${value.toLocaleString()}`
+              ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : value.toLocaleString()}
           </p>
         </div>
@@ -360,7 +357,6 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex-1 p-4 lg:p-12 overflow-auto">
-            {/* Dashboard Tab */}
             {activeTab === "dashboard" && (
               <div className="space-y-6 lg:space-y-8">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -411,23 +407,25 @@ const AdminDashboard = () => {
                     <div className="space-y-3">
                       {orders.slice(0, 5).map((order) => (
                         <div
-                          key={order.id}
+                          key={order._id}
                           className="flex items-center justify-between p-4 bg-white/5 rounded-lg"
                         >
                           <div className="flex-1">
                             <div className="text-white font-medium text-sm">
-                              {order.id}
+                              #{order._id.slice(-8).toUpperCase()}
                             </div>
                             <div className="text-white/60 text-xs">
-                              {order.customer}
+                              {order.user
+                                ? `${order.user.firstName} ${order.user.lastName}`
+                                : "N/A"}
                             </div>
                           </div>
                           <div className="text-right mr-4">
                             <div className="text-white font-medium">
-                              ${order.total}
+                              ${order.totalAmount?.toFixed(2) || "0.00"}
                             </div>
                             <div className="text-white/60 text-xs">
-                              {order.items} items
+                              {order.items?.length || 0} items
                             </div>
                           </div>
                           <span
@@ -439,6 +437,11 @@ const AdminDashboard = () => {
                           </span>
                         </div>
                       ))}
+                      {orders.length === 0 && (
+                        <div className="text-center py-8 text-white/40">
+                          No orders yet
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -447,9 +450,9 @@ const AdminDashboard = () => {
                       Top Products
                     </h3>
                     <div className="space-y-3">
-                      {products.map((product) => (
+                      {products.slice(0, 5).map((product) => (
                         <div
-                          key={product.id}
+                          key={product._id}
                           className="flex items-center justify-between p-4 bg-white/5 rounded-lg"
                         >
                           <div className="flex-1">
@@ -465,18 +468,22 @@ const AdminDashboard = () => {
                               ${product.price}
                             </div>
                             <div className="text-white/60 text-xs">
-                              {product.sold} sold
+                              Stock: {product.stock || 0}
                             </div>
                           </div>
                         </div>
                       ))}
+                      {products.length === 0 && (
+                        <div className="text-center py-8 text-white/40">
+                          No products yet
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Orders Tab */}
             {activeTab === "orders" && (
               <div className="space-y-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -488,13 +495,6 @@ const AdminDashboard = () => {
                       Manage and track all orders
                     </p>
                   </div>
-                  <Link
-                    to="/prodUpload"
-                    className="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors text-sm font-medium flex items-center space-x-2 w-fit"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>New Order</span>
-                  </Link>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -502,16 +502,23 @@ const AdminDashboard = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
                     <input
                       type="text"
-                      placeholder="Search orders..."
+                      placeholder="Search orders by customer or order ID..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
-                  <button className="bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white hover:bg-white/10 transition-colors flex items-center space-x-2">
-                    <Filter className="w-4 h-4" />
-                    <span>Filter</span>
-                  </button>
+                  <select
+                    className="bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    value={statusFilter}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
                 </div>
 
                 <div className="bg-black/20 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
@@ -529,7 +536,10 @@ const AdminDashboard = () => {
                             Items
                           </th>
                           <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Total
+                            Total Amount
+                          </th>
+                          <th className="text-left p-4 text-white/60 text-sm font-light">
+                            Payment Method
                           </th>
                           <th className="text-left p-4 text-white/60 text-sm font-light">
                             Status
@@ -543,55 +553,92 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.map((order) => (
-                          <tr
-                            key={order.id}
-                            className="border-t border-white/10 hover:bg-white/5"
-                          >
-                            <td className="p-4 text-white text-sm">
-                              {order.id}
-                            </td>
-                            <td className="p-4 text-white text-sm">
-                              {order.customer}
-                            </td>
-                            <td className="p-4 text-white text-sm">
-                              {order.items}
-                            </td>
-                            <td className="p-4 text-white text-sm">
-                              ${order.total}
-                            </td>
-                            <td className="p-4">
-                              <span
-                                className={`px-2 py-1 rounded text-xs border ${getStatusColor(
-                                  order.status
-                                )}`}
-                              >
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="p-4 text-white/60 text-sm">
-                              {order.date}
-                            </td>
-                            <td className="p-4">
-                              <div className="flex space-x-2">
-                                <button className="text-white/60 hover:text-white">
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <button className="text-white/60 hover:text-white">
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {orders
+                          .filter(
+                            (order) =>
+                              (statusFilter === "all" ||
+                                order.status === statusFilter) &&
+                              (searchQuery === "" ||
+                                order._id
+                                  .toLowerCase()
+                                  .includes(searchQuery.toLowerCase()) ||
+                                (
+                                  order.user?.firstName +
+                                  " " +
+                                  order.user?.lastName
+                                )
+                                  .toLowerCase()
+                                  .includes(searchQuery.toLowerCase()))
+                          )
+                          .map((order) => (
+                            <tr
+                              key={order._id}
+                              className="border-t border-white/10 hover:bg-white/5"
+                            >
+                              <td className="p-4 text-white text-sm font-mono">
+                                #{order._id.slice(-8).toUpperCase()}
+                              </td>
+                              <td className="p-4 text-white text-sm">
+                                {order.user
+                                  ? `${order.username}`
+                                  : "N/A"}
+                              </td>
+                              <td className="p-4 text-white text-sm">
+                                {order.items?.length || 0} item
+                                {order.items?.length !== 1 ? "s" : ""}
+                              </td>
+                              <td className="p-4 text-white text-sm font-medium">
+                                ${order.totalAmount?.toFixed(2) || "0.00"}
+                              </td>
+                              <td className="p-4 text-white text-sm">
+                                <span className="px-2 py-1 rounded bg-white/10 text-xs">
+                                  {order.paymentMethod || "N/A"}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <select
+                                  value={order.status}
+                                  onChange={(e) =>
+                                    updateOrderStatus(order._id, e.target.value)
+                                  }
+                                  className={`px-2 py-1 rounded text-xs border bg-black ${getStatusColor(
+                                    order.status
+                                  )}`}
+                                >
+                                  <option value="Pending">Pending</option>
+                                  <option value="Shipped">Shipped</option>
+                                  <option value="Delivered">Delivered</option>
+                                  <option value="Cancelled">Cancelled</option>
+                                </select>
+                              </td>
+                              <td className="p-4 text-white/60 text-sm">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="p-4">
+                                <div className="flex space-x-2">
+                                  <button
+                                    className="text-white/60 hover:text-white"
+                                    onClick={() => viewOrderDetails(order._id)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
+
+                    {orders.length === 0 && (
+                      <div className="text-center py-12 text-white/40">
+                        No orders found
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Products Tab */}
             {activeTab === "products" && (
               <div className="space-y-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -618,13 +665,12 @@ const AdminDashboard = () => {
                       className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
-                  
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {products.map((product) => (
                     <div
-                      key={product.id}
+                      key={product._id}
                       className="bg-black/20 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden"
                     >
                       <div className="aspect-square bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
@@ -649,7 +695,7 @@ const AdminDashboard = () => {
                             <span className="text-white/40">No Image</span>
                           </div>
                         )}
-                      </div>{" "}
+                      </div>
                       <div className="p-6">
                         <div className="flex items-start justify-between mb-3">
                           <div>
@@ -673,7 +719,7 @@ const AdminDashboard = () => {
                             ${product.price}
                           </span>
                           <span className="text-white/60 text-sm">
-                            Stock: {product.stock}
+                            Stock: {product.stock || 0}
                           </span>
                         </div>
                         <div className="flex space-x-2">
@@ -688,11 +734,15 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   ))}
+                  {products.length === 0 && (
+                    <div className="col-span-full text-center py-12 text-white/40">
+                      No products found
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Customers Tab */}
             {activeTab === "customers" && (
               <div className="space-y-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -729,7 +779,6 @@ const AdminDashboard = () => {
                           <th className="text-left p-4 text-white/60 text-sm font-light">
                             Orders
                           </th>
-
                           <th className="text-left p-4 text-white/60 text-sm font-light">
                             Status
                           </th>
@@ -741,7 +790,7 @@ const AdminDashboard = () => {
                       <tbody>
                         {users.map((user) => (
                           <tr
-                            key={user.id}
+                            key={user._id}
                             className="border-t border-white/10 hover:bg-white/5"
                           >
                             <td className="p-4">
@@ -761,9 +810,8 @@ const AdminDashboard = () => {
                               {user.email}
                             </td>
                             <td className="p-4 text-white text-sm">
-                              {user.orders}
+                              {user.orders || 0}
                             </td>
-
                             <td className="p-4">
                               <span
                                 className={`px-2 py-1 rounded text-xs border ${getStatusColor(
@@ -801,6 +849,11 @@ const AdminDashboard = () => {
                         ))}
                       </tbody>
                     </table>
+                    {users.length === 0 && (
+                      <div className="text-center py-12 text-white/40">
+                        No customers found
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

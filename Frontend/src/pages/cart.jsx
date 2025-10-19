@@ -16,18 +16,17 @@ import { useEffect } from "react";
 import { checkAuth } from "../utils/checkAuth";
 
 const PremiumCartPage = () => {
-  const { cart,removeFromCart } = useCartStore();
+  const { cart, removeFromCart } = useCartStore();
   const [cartItems, setCartItems] = useState(cart);
-  const navigate= useNavigate()
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
-  
-   useEffect(() => {
+  useEffect(() => {
     const checkAuthentication = async () => {
       try {
         const isAuthenticated = await checkAuth();
-        
+
         if (!isAuthenticated) {
           navigate("/login");
           return;
@@ -37,7 +36,7 @@ const PremiumCartPage = () => {
         navigate("/login");
       }
     };
-  
+
     checkAuthentication();
   }, [navigate]);
 
@@ -55,7 +54,7 @@ const PremiumCartPage = () => {
 
   const removeItem = (id) => {
     setCartItems((items) => items.filter((item) => item.id !== id));
-    removeFromCart(id)
+    removeFromCart(id);
   };
 
   const subtotal = cartItems.reduce(
@@ -281,7 +280,8 @@ const PremiumCartPage = () => {
               )}
 
               {/* Checkout Button */}
-              <button
+              <Link
+                to="/checkout"
                 onClick={handleCheckout}
                 disabled={isLoading || cartItems.length === 0}
                 className="w-full mt-6 bg-white text-black py-4 px-8 rounded-2xl font-medium hover:bg-gray-100 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -297,7 +297,7 @@ const PremiumCartPage = () => {
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
-              </button>
+              </Link>
             </div>
 
             {/* Payment Methods */}

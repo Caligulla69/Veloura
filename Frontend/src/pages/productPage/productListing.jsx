@@ -19,17 +19,8 @@ const ProductCard = memo(({ product }) => {
   const { addToCart } = useCartStore();
   const { prod } = useAuthStore();
   const isWishlisted = isInWishlist(product.id);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      const isAuthenticated = await checkAuth();
-      setIsAuthenticated(isAuthenticated);
-    };
-    checkAuthentication();
-  }, []);
 
   const handleWishlistClick = useCallback(() => {
     toggleWishlist(product);
@@ -38,11 +29,8 @@ const ProductCard = memo(({ product }) => {
   const handleAddToCart = useCallback(
     (e) => {
       e.preventDefault();
-      if (isAuthenticated) {
-        addToCart(product);
-      } else {
-        navigate("/login");
-      }
+
+      addToCart(product);
     },
     [product, addToCart]
   );

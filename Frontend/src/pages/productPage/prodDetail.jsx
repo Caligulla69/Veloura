@@ -88,16 +88,9 @@ const ProductDetailPage = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      const isAuthenticated = await checkAuth();
-      setIsAuthenticated(isAuthenticated);
-    };
-    checkAuthentication();
-  }, []);
+
 
   // Fetch product data
   useEffect(() => {
@@ -162,7 +155,7 @@ const ProductDetailPage = () => {
   }, []);
 
   const handleAddToCart = useCallback(() => {
-    if (product && isAuthenticated) {
+    if (product ) {
       addToCart({ ...product, quantity });
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 3000);

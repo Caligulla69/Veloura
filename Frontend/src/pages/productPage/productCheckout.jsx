@@ -92,7 +92,7 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
           <p className="text-white/60 font-light text-sm">
             Color: {item.color}
           </p>
-          
+
           <div className="flex justify-between items-center sm:hidden">
             <div>
               <div className="text-lg font-light text-white">
@@ -386,7 +386,7 @@ const DeliveryInfo = memo(
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { cart,removeFromCart } = useCartStore();
+  const { cart, removeFromCart } = useCartStore();
   const [cartItems, setCartItems] = useState([]);
   const [user, setUser] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -460,7 +460,7 @@ const CheckoutPage = () => {
 
   const removeItem = useCallback((id) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
-    removeFromCart(id)
+    removeFromCart(id);
   }, []);
 
   const handleInputChange = useCallback((e) => {
@@ -520,43 +520,70 @@ const CheckoutPage = () => {
     paymentMethod === "credit" || paymentMethod === "paypal";
   const isOrderDisabled = cartItems.length === 0;
 
-  const handlePlaceOrder = async () => {
-    if (isOrderDisabled) return;
+ const handlePlaceOrder = async () => {
+  if (isOrderDisabled) return;
 
-    if (showCardHolderField && !formData.cardHolderName) {
-      alert("Please enter card holder name");
-      return;
+  if (showCardHolderField && !formData.cardHolderName) {
+    alert("Please enter card holder name");
+    return;
+  }
+
+  if (
+    !formData.firstName ||
+    !formData.lastName ||
+    !formData.email ||
+    !formData.address ||
+    !formData.zipCode ||
+    !formData.phone
+  ) {
+    alert(
+      "Please complete your delivery information before placing the order"
+    );
+    return;
+  }
+
+  try {
+    const shippingAddress = `${formData.firstName} ${formData.lastName}, ${formData.address}, ${formData.zipCode}, Phone: ${formData.phone}, Email: ${formData.email}`;
+    const username = `${formData.firstName} ${formData.lastName}`
+    const paymentMethodMap = {
+      cod: "COD",
+      credit: "Card",
+      paypal: "PayPal",
+      apple: "Card",
+    };
+
+    // Don't send cart - let backend fetch it from session/database
+    const orderData = {
+      username,
+      cart,
+      shippingAddress,
+      paymentMethod: paymentMethodMap[paymentMethod] || "COD",
+    };
+
+    const res = await fetch(`${API_URL}/order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(orderData),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      cartItems.forEach((item) => removeFromCart(item.id));
+      setCartItems([]);
+      alert("Order placed successfully! You will receive a confirmation email shortly.");
+      navigate("/prodListing");
+    } else {
+      alert(data.message || "Failed to place order. Please try again.");
     }
-
-    try {
-      const orderData = {
-        items: cartItems,
-        deliveryInfo: formData,
-        paymentMethod,
-        total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      };
-
-      // Replace with your actual API endpoint
-      const res = await fetch(`${API_URL}/orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(orderData),
-      });
-
-      if (res.ok) {
-        alert("Order placed successfully! You will receive a confirmation email shortly.");
-        navigate("/orders");
-      } else {
-        alert("Failed to place order. Please try again.");
-      }
-    } catch (error) {
-      console.error("Order placement failed:", error);
-      alert("An error occurred while placing your order. Please try again.");
-    }
-  };
+  } catch (error) {
+    console.error("Order placement failed:", error);
+    alert("An error occurred while placing your order. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900 relative">

@@ -244,33 +244,76 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
 // -----------------------------
 router.post("/order", isLoggedIn, async (req, res) => {
   try {
-    const cart = await CartModel.findOne({ user: req.user._id }).populate("items.product");
-    if (!cart || cart.items.length === 0)
+    // Get cart from request body instead of req.cart
+    const { username,cart, shippingAddress, paymentMethod } = req.body;
+    
+    console.log("Received cart:", cart);
+    
+    if (!cart || cart.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    // Format items to match Order schema
+    const orderItems = cart.map(item => ({
+      product: item._id, // Use the product ID from cart
+      quantity: item.quantity,
+    }));
+
+    // Calculate total amount from cart items
+    const totalAmount = cart.reduce((sum, item) => {
+      return sum + (item.price * item.quantity);
+    }, 0);
 
     const order = new OrderModel({
       user: req.user._id,
-      items: cart.items,
-      totalAmount: cart.totalPrice,
-      shippingAddress: req.body.shippingAddress,
-      paymentMethod: req.body.paymentMethod,
+      username:username,
+      items: orderItems,
+      totalAmount: totalAmount,
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod || "COD",
     });
 
     await order.save();
 
-    cart.items = [];
-    cart.totalPrice = 0;
-    await cart.save();
+  
 
-    res.status(201).json({ message: "Order placed successfully", order });
+    res.status(201).json({ 
+      message: "Order placed successfully", 
+      order 
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Order placement failed" });
+    console.error("Order placement error:", err);
+    res.status(500).json({ 
+      message: "Order placement failed",
+      error: err.message 
+    });
   }
 });
 
-router.get("/orders", isLoggedIn, async (req, res) => {
-  const orders = await OrderModel.find({ user: req.user._id }).populate("items.product");
+router.post("/orders/:orderId/status", isLoggedIn, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const { orderId } = req.params;
+
+    const order = await OrderModel.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json({ message: "Order status updated", order });
+  } catch (error) {
+    console.error("Failed to update order status:", error);
+    res.status(500).json({ message: "Failed to update order status" });
+  }
+});
+
+router.get("/getOrders", isLoggedIn, async (req, res) => {
+  const orders = await OrderModel.find();
   res.json(orders);
 });
 
