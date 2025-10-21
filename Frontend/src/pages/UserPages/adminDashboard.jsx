@@ -13,12 +13,20 @@ import {
   Trash2,
   Plus,
   Eye,
+  CalendarHeart,
   ChevronRight,
   Menu,
   Bell,
   Home,
   ShieldOff,
   ShieldCheck,
+  XCircle,
+  CreditCard,
+  MapPin,
+  Download,
+  Truck,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -129,7 +137,10 @@ const AdminDashboard = () => {
   };
 
   const analyticsData = useMemo(() => {
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + (order.totalAmount || 0),
+      0
+    );
     const totalOrders = orders.length;
     const totalCustomers = users.length;
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -154,6 +165,20 @@ const AdminDashboard = () => {
     { id: "customers", label: "Customers", icon: Users },
   ];
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "Pending":
+        return Clock;
+      case "Shipped":
+        return Truck;
+      case "Delivered":
+        return CheckCircle;
+      case "Cancelled":
+        return XCircle;
+      default:
+        return Package;
+    }
+  };
   const getStatusColor = useCallback((status) => {
     const colors = {
       active: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
@@ -172,18 +197,21 @@ const AdminDashboard = () => {
     return colors[status] || "text-gray-400 bg-gray-400/10 border-gray-400/20";
   }, []);
 
-  const handleTabChange = useCallback((tabId) => {
-    if (tabId === "logout") {
-      logout(redirect);
-      return;
-    }
-    if (tabId === "home") {
-      redirect("/prodListing");
-      return;
-    }
-    setActiveTab(tabId);
-    setSidebarOpen(false);
-  }, [redirect]);
+  const handleTabChange = useCallback(
+    (tabId) => {
+      if (tabId === "logout") {
+        logout(redirect);
+        return;
+      }
+      if (tabId === "home") {
+        redirect("/prodListing");
+        return;
+      }
+      setActiveTab(tabId);
+      setSidebarOpen(false);
+    },
+    [redirect]
+  );
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -298,7 +326,10 @@ const AdminDashboard = () => {
           </p>
           <p className="text-white text-2xl lg:text-3xl font-light">
             {format === "currency"
-              ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              ? `$${value.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`
               : value.toLocaleString()}
           </p>
         </div>
@@ -485,7 +516,7 @@ const AdminDashboard = () => {
             )}
 
             {activeTab === "orders" && (
-              <div className="space-y-6">
+              <div className="space-y-6 lg:space-y-8">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div>
                     <h1 className="text-2xl lg:text-4xl font-light text-white mb-2 tracking-tight">
@@ -494,6 +525,12 @@ const AdminDashboard = () => {
                     <p className="text-white/60 tracking-wide text-sm lg:text-base">
                       Manage and track all orders
                     </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-white/60 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      <span>{orders.length} Total Orders</span>
+                    </div>
                   </div>
                 </div>
 
@@ -505,11 +542,11 @@ const AdminDashboard = () => {
                       placeholder="Search orders by customer or order ID..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400"
+                      className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400 transition-colors"
                     />
                   </div>
                   <select
-                    className="bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                    className="bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-400 transition-colors"
                     onChange={(e) => setStatusFilter(e.target.value)}
                     value={statusFilter}
                   >
@@ -521,121 +558,143 @@ const AdminDashboard = () => {
                   </select>
                 </div>
 
-                <div className="bg-black/20 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-white/5">
-                        <tr>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Order ID
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Customer
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Items
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Total Amount
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Payment Method
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Status
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Date
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders
-                          .filter(
-                            (order) =>
-                              (statusFilter === "all" ||
-                                order.status === statusFilter) &&
-                              (searchQuery === "" ||
-                                order._id
-                                  .toLowerCase()
-                                  .includes(searchQuery.toLowerCase()) ||
-                                (
-                                  order.user?.firstName +
-                                  " " +
-                                  order.user?.lastName
-                                )
-                                  .toLowerCase()
-                                  .includes(searchQuery.toLowerCase()))
-                          )
-                          .map((order) => (
-                            <tr
-                              key={order._id}
-                              className="border-t border-white/10 hover:bg-white/5"
-                            >
-                              <td className="p-4 text-white text-sm font-mono">
+                {/* Orders Cards */}
+                <div className="space-y-3">
+                  {orders
+                    .filter(
+                      (order) =>
+                        (statusFilter === "all" ||
+                          order.status === statusFilter) &&
+                        (searchQuery === "" ||
+                          order._id
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          (order.user?.firstName + " " + order.user?.lastName)
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()))
+                    )
+                    .map((order) => {
+                      const StatusIcon = getStatusIcon(order.status);
+                      return (
+                        <div
+                          key={order._id}
+                          className="bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition-colors p-5"
+                        >
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+                            <div>
+                              <h3 className="text-white font-medium font-mono">
                                 #{order._id.slice(-8).toUpperCase()}
-                              </td>
-                              <td className="p-4 text-white text-sm">
+                              </h3>
+                              <p className="text-white/60 text-sm mt-1">
                                 {order.user
                                   ? `${order.username}`
-                                  : "N/A"}
-                              </td>
-                              <td className="p-4 text-white text-sm">
-                                {order.items?.length || 0} item
-                                {order.items?.length !== 1 ? "s" : ""}
-                              </td>
-                              <td className="p-4 text-white text-sm font-medium">
-                                ${order.totalAmount?.toFixed(2) || "0.00"}
-                              </td>
-                              <td className="p-4 text-white text-sm">
-                                <span className="px-2 py-1 rounded bg-white/10 text-xs">
-                                  {order.paymentMethod || "N/A"}
-                                </span>
-                              </td>
-                              <td className="p-4">
-                                <select
-                                  value={order.status}
-                                  onChange={(e) =>
-                                    updateOrderStatus(order._id, e.target.value)
-                                  }
-                                  className={`px-2 py-1 rounded text-xs border bg-black ${getStatusColor(
-                                    order.status
-                                  )}`}
-                                >
-                                  <option value="Pending">Pending</option>
-                                  <option value="Shipped">Shipped</option>
-                                  <option value="Delivered">Delivered</option>
-                                  <option value="Cancelled">Cancelled</option>
-                                </select>
-                              </td>
-                              <td className="p-4 text-white/60 text-sm">
-                                {new Date(order.createdAt).toLocaleDateString()}
-                              </td>
-                              <td className="p-4">
-                                <div className="flex space-x-2">
-                                  <button
-                                    className="text-white/60 hover:text-white"
-                                    onClick={() => viewOrderDetails(order._id)}
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
+                                  : "Guest Order"}
+                              </p>
+                            </div>
+                            <select
+                              value={order.status}
+                              onChange={(e) =>
+                                updateOrderStatus(order._id, e.target.value)
+                              }
+                              className={`px-3 py-1.5 rounded text-xs font-medium border bg-black ${getStatusColor(
+                                order.status
+                              )}`}
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                          </div>
 
-                    {orders.length === 0 && (
-                      <div className="text-center py-12 text-white/40">
-                        No orders found
-                      </div>
-                    )}
-                  </div>
+                          {/* Info Grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <div>
+                              <p className="text-white/40 text-xs mb-1">
+                                Items
+                              </p>
+                              <p className="text-white">
+                                {order.items?.length || 0}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-white/40 text-xs mb-1">
+                                Total
+                              </p>
+                              <p className="text-white font-medium">
+                                ${order.totalAmount?.toFixed(2) || "0.00"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-white/40 text-xs mb-1">
+                                Payment
+                              </p>
+                              <p className="text-white">
+                                {order.paymentMethod || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-white/40 text-xs mb-1">Date</p>
+                              <p className="text-white">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Shipping Address */}
+                          {order.shippingAddress && (
+                            <div className="mb-4 p-3 bg-white/5 rounded text-sm">
+                              <p className="text-white/40 text-xs mb-1">
+                                Shipping Address
+                              </p>
+                              <p className="text-white/80">
+                                {order.shippingAddress}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => viewOrderDetails(order._id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded text-white text-sm hover:bg-white/20 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span>View Details</span>
+                            </button>
+                           
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
+
+                {orders.filter(
+                  (order) =>
+                    (statusFilter === "all" || order.status === statusFilter) &&
+                    (searchQuery === "" ||
+                      order._id
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()) ||
+                      (order.user?.firstName + " " + order.user?.lastName)
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()))
+                ).length === 0 && (
+                  <div className="text-center py-16">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Package className="w-8 h-8 text-white/20" />
+                    </div>
+                    <h3 className="text-white text-xl font-light mb-2">
+                      No orders found
+                    </h3>
+                    <p className="text-white/60">
+                      {searchQuery || statusFilter !== "all"
+                        ? "Try adjusting your search or filter criteria"
+                        : "Orders will appear here once customers place them"}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -744,7 +803,7 @@ const AdminDashboard = () => {
             )}
 
             {activeTab === "customers" && (
-              <div className="space-y-6">
+              <div className="space-y-6 lg:space-y-8">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div>
                     <h1 className="text-2xl lg:text-4xl font-light text-white mb-2 tracking-tight">
@@ -754,108 +813,136 @@ const AdminDashboard = () => {
                       View and manage your customers
                     </p>
                   </div>
+                  <div className="flex items-center gap-3 text-white/60 text-sm">
+                    <Users className="w-5 h-5" />
+                    <span>{users.length} Total Customers</span>
+                  </div>
                 </div>
 
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Search customers..."
-                    className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400"
+                    placeholder="Search customers by name or email..."
+                    className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400 transition-colors"
                   />
                 </div>
 
-                <div className="bg-black/20 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-white/5">
-                        <tr>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Customer
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Email
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Orders
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Status
-                          </th>
-                          <th className="text-left p-4 text-white/60 text-sm font-light">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map((user) => (
-                          <tr
-                            key={user._id}
-                            className="border-t border-white/10 hover:bg-white/5"
+                {/* Customers Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {users.map((user) => (
+                    <div
+                      key={user._id}
+                      className="group bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300 overflow-hidden"
+                    >
+                      <div className="p-6">
+                        {/* Header with Avatar and Status */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-semibold text-lg shadow-lg">
+                              {`${user.firstName} ${user.lastName}`
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium text-base">
+                                {user.firstName} {user.lastName}
+                              </h3>
+                              <p className="text-white/40 text-sm mt-0.5">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                              user.status
+                            )}`}
                           >
-                            <td className="p-4">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-medium">
-                                  {`${user.firstName} ${user.lastName}`
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </div>
-                                <span className="text-white text-sm">
-                                  {user.firstName} {user.lastName}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="p-4 text-white/60 text-sm">
-                              {user.email}
-                            </td>
-                            <td className="p-4 text-white text-sm">
+                            {user.status}
+                          </span>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="space-y-2 mb-4 pb-4 border-b border-white/10">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white/60 text-sm">
+                              <Package className="w-4 h-4" />
+                              <span>Total Orders</span>
+                            </div>
+                            <span className="text-white font-medium">
                               {user.orders || 0}
-                            </td>
-                            <td className="p-4">
-                              <span
-                                className={`px-2 py-1 rounded text-xs border ${getStatusColor(
-                                  user.status
-                                )}`}
-                              >
-                                {user.status}
-                              </span>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() =>
-                                    handleToggleUserStatus(
-                                      user._id,
-                                      user.status
-                                    )
-                                  }
-                                  className="text-white/60 hover:text-white transition"
-                                  title={
-                                    user.status === "disabled"
-                                      ? "Enable User"
-                                      : "Disable User"
-                                  }
-                                >
-                                  {user.status === "disabled" ? (
-                                    <ShieldCheck className="w-4 h-4 text-green-400" />
-                                  ) : (
-                                    <ShieldOff className="w-4 h-4 text-red-400" />
-                                  )}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {users.length === 0 && (
-                      <div className="text-center py-12 text-white/40">
-                        No customers found
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white/60 text-sm">
+                              <CalendarHeart className="w-4 h-4" />
+                              <span>Member Since</span>
+                            </div>
+                            <span className="text-white font-medium text-sm">
+                              {user.createdAt
+                                ? new Date(user.createdAt).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      year: "numeric",
+                                    }
+                                  )
+                                : "N/A"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() =>
+                              handleToggleUserStatus(user._id, user.status)
+                            }
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              user.status === "disabled"
+                                ? "bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20"
+                                : "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20"
+                            }`}
+                            title={
+                              user.status === "disabled"
+                                ? "Enable User"
+                                : "Disable User"
+                            }
+                          >
+                            {user.status === "disabled" ? (
+                              <>
+                                <ShieldCheck className="w-4 h-4" />
+                                <span>Enable</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShieldOff className="w-4 h-4" />
+                                <span>Disable</span>
+                              </>
+                            )}
+                          </button>
+                          <button className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
+
+                {users.length === 0 && (
+                  <div className="text-center py-16">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-8 h-8 text-white/20" />
+                    </div>
+                    <h3 className="text-white text-xl font-light mb-2">
+                      No customers found
+                    </h3>
+                    <p className="text-white/60">Your customer list is empty</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

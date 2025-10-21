@@ -21,6 +21,7 @@ import { useWishlistStore } from "../../store/useWishlistStore";
 import { useCartStore } from "../../store/useCartStore";
 import API_URL from "../../utils/api";
 import { checkAuth } from "../../utils/checkAuth";
+import Navbar from "../../components/Navbar";
 
 // Ultra-optimized memoized components
 const StarRating = memo(({ rating }) => {
@@ -29,7 +30,7 @@ const StarRating = memo(({ rating }) => {
       Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${
+          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-50 ${
             i < Math.floor(rating)
               ? "text-amber-400 fill-current"
               : i < rating
@@ -47,7 +48,7 @@ const StarRating = memo(({ rating }) => {
 const ThumbnailImage = memo(({ image, index, isActive, onClick }) => (
   <button
     onClick={() => onClick(image, index)}
-    className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 hover:scale-105 ${
+    className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-50 hover:scale-105 ${
       isActive
         ? "border-white shadow-lg shadow-white/20 scale-105"
         : "border-white/20 hover:border-white/40"
@@ -197,7 +198,7 @@ const ProductDetailPage = () => {
           <div className="text-red-400 text-lg mb-4 font-light">{error}</div>
           <button
             onClick={() => window.location.reload()}
-            className="bg-white text-black px-6 py-3 rounded-xl font-medium hover:bg-gray-100 transition-colors duration-200"
+            className="bg-white text-black px-6 py-3 rounded-xl font-medium hover:bg-gray-100 transition-colors duration-50"
           >
             Try Again
           </button>
@@ -218,22 +219,18 @@ const ProductDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900">
-      <div className="fixed inset-0 opacity-20 pointer-events-none bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
+      <Navbar />
+      <div className="fixed mt-10 inset-0 opacity-20 pointer-events-none bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
 
       <div className="relative z-10 container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 max-w-7xl">
         {/* Breadcrumb */}
         <div className="mb-4 sm:mb-6 md:mb-8 overflow-x-auto">
           <div className="flex items-center gap-2 text-white/50 text-xs sm:text-sm font-light whitespace-nowrap">
-            <Link to="/" className="hover:text-white/80 transition-colors">
+            <Link to="/prodListing" className="hover:text-white/80 transition-colors">
               Home
             </Link>
             <ChevronRight className="w-3 h-3 opacity-40" />
-            <Link
-              to="/prodListing"
-              className="hover:text-white/80 transition-colors"
-            >
-              Products
-            </Link>
+            
             <ChevronRight className="w-3 h-3 opacity-40" />
             <span className="text-white font-medium">{product.category}</span>
           </div>
@@ -259,12 +256,12 @@ const ProductDetailPage = () => {
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white/40" />
               </div>
 
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 p-2 sm:p-3 bg-black/40 backdrop-blur-sm border border-white/30 text-white rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 p-2 sm:p-3 bg-black/40 backdrop-blur-sm border border-white/30 text-white rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-50">
                 <Eye className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </div>
 
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-200 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 backdrop-blur-sm px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full text-white font-light text-xs sm:text-sm">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-50 flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-50 bg-black/60 backdrop-blur-sm px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full text-white font-light text-xs sm:text-sm">
                   Tap to expand
                 </div>
               </div>
@@ -296,10 +293,10 @@ const ProductDetailPage = () => {
                 </span>
                 <button
                   onClick={handleToggleWishlist}
-                  className="p-2.5 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 text-white hover:scale-105 transition-all duration-200 group"
+                  className="p-2.5 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 text-white hover:scale-105 transition-all duration-50 group"
                 >
                   <Heart
-                    className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 transition-all duration-200 ${
+                    className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 transition-all duration-50 ${
                       isWishlisted
                         ? "fill-red-500 text-red-500 scale-110"
                         : "text-white group-hover:text-red-400"
@@ -341,7 +338,7 @@ const ProductDetailPage = () => {
                 <button
                   onClick={() => handleQuantityChange(-1)}
                   disabled={quantity <= 1}
-                  className="p-2.5 sm:p-3 md:p-4 text-white hover:bg-white/10 disabled:opacity-50 transition-colors duration-200 rounded-l-xl sm:rounded-l-2xl"
+                  className="p-2.5 sm:p-3 md:p-4 text-white hover:bg-white/10 disabled:opacity-50 transition-colors duration-50 rounded-l-xl sm:rounded-l-2xl"
                 >
                   <Minus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 </button>
@@ -351,7 +348,7 @@ const ProductDetailPage = () => {
                 <button
                   onClick={() => handleQuantityChange(1)}
                   disabled={quantity >= product.stock}
-                  className="p-2.5 sm:p-3 md:p-4 text-white hover:bg-white/10 disabled:opacity-50 transition-colors duration-200 rounded-r-xl sm:rounded-r-2xl"
+                  className="p-2.5 sm:p-3 md:p-4 text-white hover:bg-white/10 disabled:opacity-50 transition-colors duration-50 rounded-r-xl sm:rounded-r-2xl"
                 >
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 </button>
@@ -378,16 +375,16 @@ const ProductDetailPage = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className="flex-1 bg-gradient-to-r from-white to-gray-100 text-black py-3 sm:py-4 md:py-5 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-medium hover:from-gray-100 hover:to-gray-200 transition-colors duration-200 flex items-center justify-center gap-2 sm:gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-gradient-to-r from-white to-gray-100 text-black py-3 sm:py-4 md:py-5 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-medium hover:from-gray-100 hover:to-gray-200 transition-colors duration-50 flex items-center justify-center gap-2 sm:gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-200" />
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-50" />
                 <span className="text-sm sm:text-base">
                   {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                 </span>
               </button>
               <Link
                 to="/checkout"
-                className="flex-1 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 text-white py-3 sm:py-4 md:py-5 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-light hover:from-white/20 hover:to-white/10 transition-colors duration-200 flex items-center justify-center"
+                className="flex-1 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 text-white py-3 sm:py-4 md:py-5 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-light hover:from-white/20 hover:to-white/10 transition-colors duration-50 flex items-center justify-center"
               >
                 <span className="text-sm sm:text-base">Buy Now</span>
               </Link>
@@ -395,15 +392,15 @@ const ProductDetailPage = () => {
 
             {/* Trust badges */}
             <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 pt-4 sm:pt-6 md:pt-8 border-t border-white/10">
-              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 text-white/60 font-light text-xs sm:text-sm hover:text-white/80 transition-colors duration-200">
+              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 text-white/60 font-light text-xs sm:text-sm hover:text-white/80 transition-colors duration-50">
                 <Shield className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Secure</span>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 text-white/60 font-light text-xs sm:text-sm hover:text-white/80 transition-colors duration-200">
+              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 text-white/60 font-light text-xs sm:text-sm hover:text-white/80 transition-colors duration-50">
                 <Award className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Quality</span>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 text-white/60 font-light text-xs sm:text-sm hover:text-white/80 transition-colors duration-200">
+              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 text-white/60 font-light text-xs sm:text-sm hover:text-white/80 transition-colors duration-50">
                 <Truck className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Fast Shipping</span>
               </div>
@@ -418,7 +415,7 @@ const ProductDetailPage = () => {
           <div className="relative w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6">
             <button
               onClick={closeModal}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 z-20 p-2 sm:p-3 md:p-4 bg-black/60 backdrop-blur-sm border border-white/30 text-white rounded-xl sm:rounded-2xl hover:bg-black/80 transition-colors duration-200"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 z-20 p-2 sm:p-3 md:p-4 bg-black/60 backdrop-blur-sm border border-white/30 text-white rounded-xl sm:rounded-2xl hover:bg-black/80 transition-colors duration-50"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
             </button>
@@ -436,13 +433,13 @@ const ProductDetailPage = () => {
               <>
                 <button
                   onClick={() => navigateImage("prev")}
-                  className="absolute left-2 sm:left-3 md:left-6 top-1/2 -translate-y-1/2 p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm border border-white/30 text-white rounded-2xl sm:rounded-3xl hover:bg-black/80 transition-colors duration-200"
+                  className="absolute left-2 sm:left-3 md:left-6 top-1/2 -translate-y-1/2 p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm border border-white/30 text-white rounded-2xl sm:rounded-3xl hover:bg-black/80 transition-colors duration-50"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
                 </button>
                 <button
                   onClick={() => navigateImage("next")}
-                  className="absolute right-2 sm:right-3 md:right-6 top-1/2 -translate-y-1/2 p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm border border-white/30 text-white rounded-2xl sm:rounded-3xl hover:bg-black/80 transition-colors duration-200"
+                  className="absolute right-2 sm:right-3 md:right-6 top-1/2 -translate-y-1/2 p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm border border-white/30 text-white rounded-2xl sm:rounded-3xl hover:bg-black/80 transition-colors duration-50"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
                 </button>

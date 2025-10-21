@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store/useAuthStore";
 import { useWishlistStore } from "../../store/useWishlistStore";
 import { useEffect } from "react";
 import { logout } from "../../utils/logout";
@@ -47,6 +46,7 @@ const UserDashboard = () => {
   const [editingProfile, setEditingProfile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
+  const [orders, setOrders] = useState([]);
   const fileInputRef = useRef(null);
   const [user, setUser] = useState([]);
   const navigate = useNavigate();
@@ -77,6 +77,25 @@ const UserDashboard = () => {
     phone: "",
   });
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`${API_URL}/getUserOrders`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch orders");
+
+        const data = await res.json();
+        setOrders(data);
+        console.log(data);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
   // Your existing useEffect for fetching user data
   useEffect(() => {
     const getUserData = async () => {
@@ -142,51 +161,22 @@ const UserDashboard = () => {
     [profileData.firstName, profileData.lastName, profileData.email]
   );
 
-  // Sample orders data
-  const orders = [
-    {
-      id: "ORD-2024-001",
-      date: "2024-08-20",
-      status: "Delivered",
-      total: 1299.99,
-      items: 3,
-      trackingNumber: "TRK123456789",
-    },
-    {
-      id: "ORD-2024-002",
-      date: "2024-08-22",
-      status: "Shipped",
-      total: 899.99,
-      items: 2,
-      trackingNumber: "TRK123456790",
-    },
-    {
-      id: "ORD-2024-003",
-      date: "2024-08-24",
-      status: "Pending",
-      total: 2199.99,
-      items: 4,
-      trackingNumber: null,
-    },
-  ];
-
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      const matchesSearch = order.id
+      const matchesSearch = order._id
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
       const matchesFilter =
-        orderFilter === "all" || order.status.toLowerCase() === orderFilter;
+        orderFilter === "all" || order.status === orderFilter;
       return matchesSearch && matchesFilter;
     });
-  }, [searchQuery, orderFilter]);
+  }, [orders, searchQuery, orderFilter]);
 
   const tabs = [
     { id: "home", label: "Home", icon: Home },
     { id: "profile", label: "Profile", icon: User },
     { id: "orders", label: "Orders", icon: Package },
     { id: "wishlist", label: "Wishlist", icon: Heart },
-    { id: "cart", label: "Your Cart", icon: ShoppingCart },
   ];
 
   // Optimized helper functions
@@ -242,9 +232,7 @@ const UserDashboard = () => {
       if (tabId === "home") {
         navigate("/prodListing");
       }
-      if (tabId === "cart") {
-        navigate("/cart");
-      }
+     
       setActiveTab(tabId);
       setSidebarOpen(false);
     },
@@ -749,76 +737,107 @@ const UserDashboard = () => {
                     className="bg-black border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-400 transition-colors"
                   >
                     <option value="all">All Orders</option>
-                    <option value="pending">Pending</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
 
                 {/* Orders List */}
-                <div className="space-y-4">
-                  {filteredOrders.map((order) => {
-                    const StatusIcon = getStatusIcon(order.status);
-                    return (
-                      <div
-                        key={order.id}
-                        className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-4 mb-2">
-                              <h3 className="text-white font-medium text-lg">
-                                {order.id}
-                              </h3>
-                              <span
-                                className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(
-                                  order.status
-                                )}`}
-                              >
-                                <StatusIcon className="w-4 h-4" />
-                                <span>{order.status}</span>
-                              </span>
-                            </div>
-                            <div className="text-white/60 space-y-1">
-                              <div className="flex items-center space-x-2">
-                                <Calendar className="w-4 h-4" />
-                                <span>
-                                  Ordered on{" "}
-                                  {new Date(order.date).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Package className="w-4 h-4" />
-                                <span>
-                                  {order.items} items • ${order.total}
-                                </span>
-                              </div>
-                              {order.trackingNumber && (
-                                <div className="flex items-center space-x-2">
-                                  <Truck className="w-4 h-4" />
-                                  <span>Tracking: {order.trackingNumber}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button className="flex items-center space-x-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white hover:bg-white/10 transition-colors">
-                              <Eye className="w-4 h-4" />
-                              <span>View Details</span>
-                            </button>
-                            {order.status.toLowerCase() === "delivered" && (
-                              <button className="flex items-center space-x-2 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-colors">
-                                <RefreshCw className="w-4 h-4" />
-                                <span>Reorder</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
+<div className="space-y-4">
+  {filteredOrders.map((order) => {
+    const StatusIcon = getStatusIcon(order.status);
+    return (
+      <div
+        key={order._id}
+        className="group bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300 overflow-hidden"
+      >
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-400/10 flex items-center justify-center">
+                <Package className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-medium text-base">
+                  Order #{order._id.slice(-8).toUpperCase()}
+                </h3>
+                <p className="text-white/40 text-sm">
+                  {new Date(order.createdAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
                   })}
-                </div>
+                </p>
+              </div>
+            </div>
+            <span
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium ${getStatusColor(
+                order.status
+              )}`}
+            >
+              <StatusIcon className="w-3.5 h-3.5" />
+              <span>{order.status}</span>
+            </span>
+          </div>
+
+          {/* Order Details Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div className="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+              <Package className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <div>
+                <p className="text-white/40 text-xs">Items</p>
+                <p className="text-white font-medium">{order.items.length}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+              <Truck className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <div>
+                <p className="text-white/40 text-xs">Payment</p>
+                <p className="text-white font-medium">{order.paymentMethod}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+              <Calendar className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <div>
+                <p className="text-white/40 text-xs">Total</p>
+                <p className="text-white font-medium">${order.totalAmount}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tracking Number if available */}
+          {order.trackingNumber && (
+            <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-blue-400" />
+                <span className="text-blue-400 text-sm font-medium">
+                  Tracking: {order.trackingNumber}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-white/5">
+            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all">
+              <Eye className="w-4 h-4" />
+              <span>View Details</span>
+            </button>
+            {order.status === "Delivered" && (
+              <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-yellow-400 text-black rounded-lg text-sm font-medium hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/20">
+                <RefreshCw className="w-4 h-4" />
+                <span>Reorder</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>
 
                 {filteredOrders.length === 0 && (
                   <div className="text-center py-12">

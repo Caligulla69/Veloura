@@ -25,6 +25,8 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+
+
 const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
   const handleDecrease = useCallback(
     () => onUpdateQuantity(item.id, item.quantity - 1),
@@ -587,6 +589,7 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900 relative">
+      <Navbar />
       <div
         className="fixed inset-0 opacity-10 pointer-events-none bg-repeat mix-blend-multiply"
         style={{

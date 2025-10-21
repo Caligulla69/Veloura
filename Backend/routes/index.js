@@ -317,6 +317,12 @@ router.get("/getOrders", isLoggedIn, async (req, res) => {
   res.json(orders);
 });
 
+router.get("/getUserOrders", isLoggedIn, async (req, res) => {
+  const orders = await OrderModel.find({email:req.email});
+  res.json(orders);
+});
+
+
 // -----------------------------
 // MIDDLEWARES
 // -----------------------------

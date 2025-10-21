@@ -5,6 +5,7 @@ export const useCartStore = create(
   persist(
     (set, get) => ({
       cart: [],
+      
 
       addToCart: (product) => {
         const existing = get().cart.find((item) => item.id === product.id);

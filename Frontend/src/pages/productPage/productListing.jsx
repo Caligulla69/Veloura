@@ -12,6 +12,20 @@ import { useCartStore } from "../../store/useCartStore";
 import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
 import { useAuthStore } from "../../store/useAuthStore";
+import Navbar from "../../components/Navbar";
+
+const LoadingScreen = memo(() => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900 flex items-center justify-center px-4">
+    <div className="text-center">
+      <div className="relative mb-6">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-white/20 border-t-white/80 rounded-full animate-spin mx-auto"></div>
+      </div>
+      <div className="text-white/80 font-light text-base sm:text-lg tracking-wide">
+        Loading...
+      </div>
+    </div>
+  </div>
+));
 
 // Memoized ProductCard component
 const ProductCard = memo(({ product }) => {
@@ -96,7 +110,7 @@ const ProductCard = memo(({ product }) => {
             onClick={() => handleProductClick(product._id)}
             className="flex-1 bg-white text-black py-2 px-4 rounded-full text-sm font-medium tracking-wide hover:bg-zinc-100 transition-all duration-300 shadow-lg"
           >
-            View
+            View Details
           </button>
           <button
             onClick={handleAddToCart}
@@ -231,8 +245,6 @@ const LuxuryProductListing = () => {
   const [productData, setProductData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const cartCount = useCartStore((state) => state.cart.length);
-  const wishlistCount = useWishlistStore((state) => state.wishlist.length);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -389,11 +401,7 @@ const LuxuryProductListing = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950 flex items-center justify-center">
-        <div className="text-white text-xl font-light">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {
@@ -405,188 +413,159 @@ const LuxuryProductListing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950">
-      {/* Luxury grain texture overlay */}
-      <div
-        className="fixed inset-0 opacity-30 pointer-events-none bg-repeat bg-[length:256px_256px]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`,
-        }}
-      />
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900">
+        <Navbar />
+        <div className="fixed inset-0 opacity-20 pointer-events-none bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
 
-      <div className="relative z-10">
-        {/* Hero Header with Cart/Wishlist Indicators */}
-        <div className="text-center py-8 sm:py-12 lg:py-16 px-4 sm:px-6">
-          <div className="absolute top-6 right-6 flex gap-4">
-            <button
-              className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all"
-              aria-label="Wishlist"
-            >
-              <Heart className="w-5 h-5 text-white" />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
-                  {wishlistCount}
-                </span>
-              )}
-            </button>
-            <Link
-              to="/cart"
-              className="relative p-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full hover:bg-zinc-800/60 transition-all"
-              aria-label="Cart"
-            >
-              <ShoppingBag className="w-5 h-5 text-white" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+        <div className="relative z-10">
+          {/* Hero Header with Cart/Wishlist Indicators */}
+          <div className="text-center py-8 sm:py-12 lg:py-16 px-4 sm:px-6">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extralight text-white mb-4 sm:mb-6 tracking-wider">
+              Collection
+            </h1>
+            <p className="text-zinc-400 text-sm sm:text-base lg:text-lg font-light tracking-wide max-w-2xl mx-auto px-4">
+              Discover our carefully curated selection of premium pieces, each
+              crafted with uncompromising attention to detail and timeless
+              elegance.
+            </p>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extralight text-white mb-4 sm:mb-6 tracking-wider">
-            Collection
-          </h1>
-          <p className="text-zinc-400 text-sm sm:text-base lg:text-lg font-light tracking-wide max-w-2xl mx-auto px-4">
-            Discover our carefully curated selection of premium pieces, each
-            crafted with uncompromising attention to detail and timeless
-            elegance.
-          </p>
-        </div>
+          <div className="container mx-auto px-4 sm:px-6 pb-8 sm:pb-12 lg:pb-16">
+            {/* Search and Controls */}
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mb-8 sm:mb-12">
+              <div className="relative flex-1 max-w-2xl">
+                <Search className="absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 text-zinc-500 w-4 h-4 sm:w-5 sm:h-5" />
+                <input
+                  type="text"
+                  placeholder="Search our collection..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="w-full bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full py-3 sm:py-4 pl-10 sm:pl-14 pr-4 sm:pr-8 text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700/80 focus:bg-zinc-900/60 transition-all duration-300 text-sm sm:text-base lg:text-lg"
+                />
+              </div>
 
-        <div className="container mx-auto px-4 sm:px-6 pb-8 sm:pb-12 lg:pb-16">
-          {/* Search and Controls */}
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mb-8 sm:mb-12">
-            <div className="relative flex-1 max-w-2xl">
-              <Search className="absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 text-zinc-500 w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="text"
-                placeholder="Search our collection..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="w-full bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 rounded-full py-3 sm:py-4 pl-10 sm:pl-14 pr-4 sm:pr-8 text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700/80 focus:bg-zinc-900/60 transition-all duration-300 text-sm sm:text-base lg:text-lg"
-              />
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryChange(category)}
+                    className={`px-4 sm:px-6 lg:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-light whitespace-nowrap tracking-wide transition-all duration-300 ${
+                      selectedCategory === category
+                        ? "bg-white text-black shadow-lg"
+                        : "bg-zinc-900/40 border border-zinc-800/60 text-zinc-300 hover:bg-zinc-800/60 hover:border-zinc-700/80"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => (
+            {/* Controls Bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 mb-8 sm:mb-12">
+              <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
                 <button
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`px-4 sm:px-6 lg:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-light whitespace-nowrap tracking-wide transition-all duration-300 ${
-                    selectedCategory === category
-                      ? "bg-white text-black shadow-lg"
-                      : "bg-zinc-900/40 border border-zinc-800/60 text-zinc-300 hover:bg-zinc-800/60 hover:border-zinc-700/80"
-                  }`}
+                  onClick={toggleFilters}
+                  className="flex items-center gap-2 sm:gap-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-zinc-800/60 hover:border-zinc-700/80 transition-all duration-300"
                 >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Controls Bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 mb-8 sm:mb-12">
-            <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
-              <button
-                onClick={toggleFilters}
-                className="flex items-center gap-2 sm:gap-3 bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-zinc-800/60 hover:border-zinc-700/80 transition-all duration-300"
-              >
-                <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="font-light tracking-wide text-sm sm:text-base">
-                  Filters
-                </span>
-              </button>
-
-              <div className="text-zinc-400 text-sm sm:text-base lg:text-lg font-light">
-                {filteredProducts.length} piece
-                {filteredProducts.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
-              <select
-                value={sortBy}
-                onChange={handleSortChange}
-                className="bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 font-light tracking-wide focus:outline-none focus:border-zinc-700/80 cursor-pointer text-sm sm:text-base flex-1 sm:flex-none"
-              >
-                <option value="featured">Featured</option>
-                <option value="name">Name</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Mobile Filter Drawer */}
-          {showFilters && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden">
-              <div className="absolute inset-x-0 bottom-0 bg-zinc-950 rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-white font-light text-xl tracking-wide">
+                  <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="font-light tracking-wide text-sm sm:text-base">
                     Filters
-                  </h3>
-                  <button
-                    onClick={toggleFilters}
-                    className="text-zinc-400 hover:text-white transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-                <FilterSidebar
-                  brands={brands}
-                  selectedFilters={selectedFilters}
-                  onUpdateFilter={updateFilter}
-                  onClearFilters={clearFilters}
-                />
-              </div>
-            </div>
-          )}
+                  </span>
+                </button>
 
-          <div className="flex gap-6 lg:gap-12">
-            {/* Desktop Filters Sidebar */}
-            <div
-              className={`hidden lg:block transition-all duration-100 ease-out ${
-                showFilters
-                  ? "w-80 xl:w-96 opacity-100"
-                  : "w-0 opacity-0 overflow-hidden"
-              }`}
-            >
-              <div className="sticky top-8">
-                <FilterSidebar
-                  brands={brands}
-                  selectedFilters={selectedFilters}
-                  onUpdateFilter={updateFilter}
-                  onClearFilters={clearFilters}
-                />
+                <div className="text-zinc-400 text-sm sm:text-base lg:text-lg font-light">
+                  {filteredProducts.length} piece
+                  {filteredProducts.length !== 1 ? "s" : ""}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                <select
+                  value={sortBy}
+                  onChange={handleSortChange}
+                  className="bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 font-light tracking-wide focus:outline-none focus:border-zinc-700/80 cursor-pointer text-sm sm:text-base flex-1 sm:flex-none"
+                >
+                  <option value="featured">Featured</option>
+                  <option value="name">Name</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
               </div>
             </div>
 
-            {/* Products Grid */}
-            <div className="flex-1 min-w-0">
-              {filteredProducts.length > 0 ? (
-                <div className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16 sm:py-24">
-                  <div className="text-zinc-400 text-lg sm:text-xl mb-6 sm:mb-8 font-light">
-                    No pieces match your criteria
+            {/* Mobile Filter Drawer */}
+            {showFilters && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden">
+                <div className="absolute inset-x-0 bottom-0 bg-zinc-950 rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-white font-light text-xl tracking-wide">
+                      Filters
+                    </h3>
+                    <button
+                      onClick={toggleFilters}
+                      className="text-zinc-400 hover:text-white transition-colors"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
                   </div>
-                  <button
-                    onClick={clearFilters}
-                    className="bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium tracking-wide hover:bg-zinc-100 transition-colors duration-300 shadow-lg text-sm sm:text-base"
-                  >
-                    Clear All Filters
-                  </button>
+                  <FilterSidebar
+                    brands={brands}
+                    selectedFilters={selectedFilters}
+                    onUpdateFilter={updateFilter}
+                    onClearFilters={clearFilters}
+                  />
                 </div>
-              )}
+              </div>
+            )}
+
+            <div className="flex gap-6 lg:gap-12">
+              {/* Desktop Filters Sidebar */}
+              <div
+                className={`hidden lg:block transition-all duration-100 ease-out ${
+                  showFilters
+                    ? "w-80 xl:w-96 opacity-100"
+                    : "w-0 opacity-0 overflow-hidden"
+                }`}
+              >
+                <div className="sticky top-8">
+                  <FilterSidebar
+                    brands={brands}
+                    selectedFilters={selectedFilters}
+                    onUpdateFilter={updateFilter}
+                    onClearFilters={clearFilters}
+                  />
+                </div>
+              </div>
+
+              {/* Products Grid */}
+              <div className="flex-1 min-w-0">
+                {filteredProducts.length > 0 ? (
+                  <div className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 sm:py-24">
+                    <div className="text-zinc-400 text-lg sm:text-xl mb-6 sm:mb-8 font-light">
+                      No pieces match your criteria
+                    </div>
+                    <button
+                      onClick={clearFilters}
+                      className="bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium tracking-wide hover:bg-zinc-100 transition-colors duration-300 shadow-lg text-sm sm:text-base"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
