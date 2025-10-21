@@ -69,7 +69,7 @@ export default function Navbar() {
             </div>
 
             {/* Center Logo */}
-            <a href="/" className="absolute left-1/2 transform -translate-x-1/2">
+            <a href="/prodListing" className="absolute left-1/2 transform -translate-x-1/2">
               <span className="text-xl sm:text-2xl md:text-3xl font-light tracking-[0.2em] sm:tracking-[0.3em] text-white">
                 Veloura
               </span>

@@ -6,6 +6,7 @@ const HomePage = lazy(() => import("./pages/homePage/Home"));
 
 const PremiumLoginPage =lazy(()=>import( "./pages/login"));
 const PremiumCartPage =lazy(()=>import( "./pages/cart"));
+const WishlistPage =lazy(()=>import( "./pages/wishlist"));
 const PremiumProductUpload =lazy(()=>import( "./pages/productPage/prodUpload"));
 const AdminDashboard = lazy(() => import("./pages/UserPages/adminDashboard"));
 
@@ -28,6 +29,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/cart" element={<PremiumCartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/login" element={<PremiumLoginPage />} />
         <Route path="/prodDetails" element={<ProductDetailPage />} />
         <Route path="/adminDashboard" element={<AdminDashboard />} />
