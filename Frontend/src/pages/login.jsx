@@ -27,21 +27,84 @@ const PremiumLoginPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // ✅ Added error state
+  const [errorMessage, setErrorMessage] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   
-  // ✅ Fixed: Call the hook with ()
   const { user, setUser } = useAuthStore();
   const navigate = useNavigate();
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrorMessage(""); // Clear errors on input
+    setErrorMessage("");
+    setValidationErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  // Validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) return "Email is required";
+    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    return "";
+  };
+
+  const validatePassword = (password) => {
+    if (!password) return "Password is required";
+    if (password.length < 8) return "Password must be at least 8 characters";
+    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+    if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
+    if (!/[0-9]/.test(password)) return "Password must contain at least one number";
+    return "";
+  };
+
+  const validateName = (name, fieldName) => {
+    if (!name.trim()) return `${fieldName} is required`;
+    if (name.trim().length < 2) return `${fieldName} must be at least 2 characters`;
+    if (!/^[a-zA-Z\s-']+$/.test(name)) return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`;
+    return "";
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    if (!isLoginMode) {
+      const firstNameError = validateName(formData.firstName, "First name");
+      if (firstNameError) errors.firstName = firstNameError;
+
+      const lastNameError = validateName(formData.lastName, "Last name");
+      if (lastNameError) errors.lastName = lastNameError;
+    }
+
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
+
+    if (!isLoginMode) {
+      if (!formData.confirmPassword) {
+        errors.confirmPassword = "Please confirm your password";
+      } else if (formData.password !== formData.confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+      }
+
+      if (!formData.rememberMe) {
+        errors.terms = "You must agree to the Terms of Service and Privacy Policy";
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage("");
+
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const endpoint = isLoginMode
@@ -61,15 +124,14 @@ const PremiumLoginPage = () => {
           };
 
       if (!isLoginMode && formData.password !== formData.confirmPassword) {
-        setErrorMessage("Passwords do not match!");
+        setValidationErrors({ confirmPassword: "Passwords do not match" });
         setIsLoading(false);
         return;
       }
 
-      // ✅ Using fetch with credentials: "include" is correct
       const response = await fetch(endpoint, {
         method: "POST",
-        credentials: "include", // ✅ Critical - sends cookies
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -80,13 +142,11 @@ const PremiumLoginPage = () => {
 
       if (!response.ok) throw new Error(data.message || "Something went wrong");
 
-      // ✅ Set user in Zustand
       setUser(data.user);
       console.log("User logged in:", data.user);
 
       setActionSuccess(true);
 
-      // ✅ Navigate based on role
       if (data.user.role === "admin") {
         setTimeout(() => navigate("/adminDashboard"), 1500);
       } else {
@@ -113,6 +173,7 @@ const PremiumLoginPage = () => {
     setShowPassword(false);
     setShowConfirmPassword(false);
     setErrorMessage("");
+    setValidationErrors({});
   };
 
   return (
@@ -164,9 +225,17 @@ const PremiumLoginPage = () => {
                       handleInputChange("firstName", e.target.value)
                     }
                     placeholder="John"
-                    className="w-full px-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300"
-                    required
+                    className={`w-full px-4 py-4 bg-white/10 backdrop-blur-sm border ${
+                      validationErrors.firstName
+                        ? "border-red-400/60"
+                        : "border-white/20"
+                    } rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300`}
                   />
+                  {validationErrors.firstName && (
+                    <p className="text-red-400 text-xs font-light mt-1">
+                      {validationErrors.firstName}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -184,9 +253,17 @@ const PremiumLoginPage = () => {
                       handleInputChange("lastName", e.target.value)
                     }
                     placeholder="Doe"
-                    className="w-full px-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300"
-                    required
+                    className={`w-full px-4 py-4 bg-white/10 backdrop-blur-sm border ${
+                      validationErrors.lastName
+                        ? "border-red-400/60"
+                        : "border-white/20"
+                    } rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300`}
                   />
+                  {validationErrors.lastName && (
+                    <p className="text-red-400 text-xs font-light mt-1">
+                      {validationErrors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -209,10 +286,18 @@ const PremiumLoginPage = () => {
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300"
-                  required
+                  className={`w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border ${
+                    validationErrors.email
+                      ? "border-red-400/60"
+                      : "border-white/20"
+                  } rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300`}
                 />
               </div>
+              {validationErrors.email && (
+                <p className="text-red-400 text-xs font-light mt-1">
+                  {validationErrors.email}
+                </p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -235,8 +320,11 @@ const PremiumLoginPage = () => {
                     handleInputChange("password", e.target.value)
                   }
                   placeholder="Enter your password"
-                  className="w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300"
-                  required
+                  className={`w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border ${
+                    validationErrors.password
+                      ? "border-red-400/60"
+                      : "border-white/20"
+                  } rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300`}
                 />
                 <button
                   type="button"
@@ -250,6 +338,11 @@ const PremiumLoginPage = () => {
                   )}
                 </button>
               </div>
+              {validationErrors.password && (
+                <p className="text-red-400 text-xs font-light mt-1">
+                  {validationErrors.password}
+                </p>
+              )}
             </div>
 
             {/* Confirm Password Field - Only for Registration */}
@@ -273,8 +366,11 @@ const PremiumLoginPage = () => {
                       handleInputChange("confirmPassword", e.target.value)
                     }
                     placeholder="Confirm your password"
-                    className="w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300"
-                    required
+                    className={`w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border ${
+                      validationErrors.confirmPassword
+                        ? "border-red-400/60"
+                        : "border-white/20"
+                    } rounded-2xl text-white placeholder-white/40 font-light focus:outline-none focus:border-white/60 focus:bg-white/15 transition-all duration-300`}
                   />
                   <button
                     type="button"
@@ -288,6 +384,11 @@ const PremiumLoginPage = () => {
                     )}
                   </button>
                 </div>
+                {validationErrors.confirmPassword && (
+                  <p className="text-red-400 text-xs font-light mt-1">
+                    {validationErrors.confirmPassword}
+                  </p>
+                )}
               </div>
             )}
 
@@ -346,6 +447,8 @@ const PremiumLoginPage = () => {
                     className={`w-5 h-5 border-2 rounded transition-all duration-300 mt-0.5 ${
                       formData.rememberMe
                         ? "bg-white border-white"
+                        : validationErrors.terms
+                        ? "border-red-400/60"
                         : "border-white/30 hover:border-white/60"
                     }`}
                   >
@@ -366,10 +469,15 @@ const PremiumLoginPage = () => {
                     </button>
                   </span>
                 </label>
+                {validationErrors.terms && (
+                  <p className="text-red-400 text-xs font-light">
+                    {validationErrors.terms}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* ✅ Error Message */}
+            {/* Error Message */}
             {errorMessage && (
               <div className="bg-red-500/20 border border-red-400/30 text-red-400 p-4 rounded-2xl backdrop-blur-sm text-center">
                 {errorMessage}

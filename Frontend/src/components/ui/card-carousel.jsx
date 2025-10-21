@@ -16,13 +16,13 @@ const PremiumCarousel = () => {
   const collections = [
     {
       id: 1,
-      src: "/people/model1.png",
+      src: "/people/model3.png",
       title: "Everyday Ease",
       subtitle: "A balance of comfort and confidence",
     },
     {
       id: 2,
-      src: "/people/model3.png",
+      src: "/people/model1.png",
       title: "Regal Elegance",
       subtitle: "Timeless artistry woven in gold and velvet",
     },

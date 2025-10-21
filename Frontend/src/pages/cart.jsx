@@ -350,57 +350,15 @@ const PremiumCartPage = () => {
               </div>
             </div>
 
-            {/* Shipping Info */}
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6">
-              <h3 className="text-white font-medium mb-4">
-                Shipping & Returns
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5 text-white/40" />
-                  <div>
-                    <p className="text-white/80 text-sm font-light">
-                      Free shipping on orders $100+
-                    </p>
-                    <p className="text-white/50 text-xs font-light">
-                      Estimated delivery: 2-3 business days
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Gift className="w-5 h-5 text-white/40" />
-                  <div>
-                    <p className="text-white/80 text-sm font-light">
-                      Gift wrapping available
-                    </p>
-                    <p className="text-white/50 text-xs font-light">
-                      Add at checkout for $4.99
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <ArrowRight className="w-5 h-5 text-white/40 rotate-180" />
-                  <div>
-                    <p className="text-white/80 text-sm font-light">
-                      30-day easy returns
-                    </p>
-                    <p className="text-white/50 text-xs font-light">
-                      Free return shipping
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          
           </div>
         </div>
 
         {/* Continue Shopping Link */}
-        <div className="text-center mt-12">
+        <div className="text-right mt-12">
           <Link
             to="/prodListing"
-            className="text-white/70 hover:text-white font-light underline underline-offset-4 transition-colors flex items-center gap-2 mx-auto"
+            className="text-white/70 hover:text-white font-light underline underline-offset-4 transition-colors flex items-right gap-2 mx-auto"
           >
             <ArrowRight className="w-4 h-4 rotate-180" />
             Continue Shopping

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {  ShoppingCart, User, Heart, X, ArrowRight, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {  ShoppingCart, User, Heart, X, ArrowRight, ChevronRight, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/useCartStore';
 import { useWishlistStore } from '../store/useWishlistStore';
+import { useAuthStore } from '../store/useAuthStore';
+import API_URL from '../utils/api';
+import { logout } from '../utils/logout';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,6 +15,8 @@ export default function Navbar() {
   // Get cart and wishlist counts from Zustand stores
   const cartCount = useCartStore((state) => state.cart.length);
   const wishlistCount = useWishlistStore((state) => state.wishlist.length);
+  const { user, setUser } = useAuthStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -33,6 +38,10 @@ export default function Navbar() {
       document.body.style.overflow = 'unset';
     };
   }, [isMenuOpen]);
+
+  const handleLogout =  () => {
+    logout(navigate)
+  };
 
   const categories = {
     Women: ['New Arrivals', 'Dresses', 'Bags', 'Shoes', 'Jewelry', 'Sale'],
@@ -100,6 +109,17 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
+
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="text-white hover:text-white/60 transition-colors p-2"
+                  aria-label="Logout"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.5} />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -204,6 +224,21 @@ export default function Navbar() {
                     Explore Now
                   </button>
                 </div>
+
+                {/* Mobile Logout Button */}
+                {user && (
+                  <div className={`mt-6 transition-all duration-700 delay-800 ${
+                    isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-center gap-2 bg-red-600/20 border border-red-400/30 text-red-400 py-3 rounded-xl hover:bg-red-600/30 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                      <span className="text-sm tracking-wider uppercase">Logout</span>
+                    </button>
+                  </div>
+                )}
 
               </div>
             </div>
@@ -344,6 +379,21 @@ export default function Navbar() {
                           <a href="#" className="text-white/60 hover:text-white text-sm transition-colors">Twitter</a>
                         </div>
                       </div>
+
+                      {/* Desktop Logout Button */}
+                      {user && (
+                        <div className={`mt-8 transition-all duration-700 delay-600 ${
+                          isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}>
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 text-white/60 hover:text-red-200 text-sm transition-colors group"
+                          >
+                            <LogOut className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
+                            <span className="tracking-wider uppercase">Logout</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
