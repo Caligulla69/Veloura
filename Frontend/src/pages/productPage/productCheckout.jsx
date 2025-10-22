@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
 import { useCartStore } from "../../store/useCartStore";
 import API_URL from "../../utils/api";
+import Navbar from "../../components/Navbar";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",

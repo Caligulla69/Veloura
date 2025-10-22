@@ -257,7 +257,11 @@ const LuxuryProductListing = () => {
         if (!res.ok) throw new Error("Failed to fetch products");
 
         const data = await res.json();
-        setProductData(data);
+        const normalizedData = data.map((product) => ({
+          ...product,
+          id: product._id || product.id, // Use _id if it exists, fallback to id
+        }));
+        setProductData(normalizedData);
       } catch (err) {
         setError(err.message);
         console.error("Error fetching products:", err);

@@ -1,32 +1,35 @@
-import React, { useState, useRef } from 'react';
-import { Upload, X, CheckCircle, AlertCircle, Camera } from 'lucide-react';
-import { useEffect } from 'react';
-import { checkAuth } from '../../utils/checkAuth';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef } from "react";
+import { Upload, X, CheckCircle, AlertCircle, Camera } from "lucide-react";
+import { useEffect } from "react";
+import { checkAuth } from "../../utils/checkAuth";
+import { useNavigate } from "react-router-dom";
+import imageCompression from "browser-image-compression";
+import Navbar from "../../components/Navbar";
+import API_URL from "../../utils/api";
 
 const PremiumProductUpload = () => {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: '',
-    brand: '',
-    stock: '',
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    brand: "",
+    stock: "",
     image: null,
     imagePreview: null,
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
-  const [message, setMessage] = useState('');
-  const navigate= useNavigate()
-  
-   useEffect(() => {
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
     const checkAuthentication = async () => {
       try {
         const isAuthenticated = await checkAuth();
-        
+
         if (!isAuthenticated) {
           navigate("/login");
           return;
@@ -36,37 +39,93 @@ const PremiumProductUpload = () => {
         navigate("/login");
       }
     };
-  
+
     checkAuthentication();
   }, [navigate]);
 
-  const categories = ['Electronics', 'Clothing', 'Home', 'Sports', 'Books', 'Toys', 'Beauty', 'Food'];
-  const brands = ['Brand A', 'Brand B', 'Brand C', 'Brand D', 'Premium Co', 'Luxury Inc', 'Standard Co'];
+  const categories = [
+    "Electronics",
+    "Clothing",
+    "Home",
+    "Sports",
+    "Books",
+    "Toys",
+    "Beauty",
+    "Food",
+  ];
+  const brands = [
+    "Brand A",
+    "Brand B",
+    "Brand C",
+    "Brand D",
+    "Premium Co",
+    "Luxury Inc",
+    "Standard Co",
+  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
+    if (!file) return;
+
+    try {
+      // Show loading state while compressing
+      setIsLoading(true);
+
+      // Compression options
+      const options = {
+        maxSizeMB: 1, // Maximum file size (1MB)
+        maxWidthOrHeight: 1920, // Maximum width or height
+        useWebWorker: true, // Use web worker for better performance
+        fileType: "image/jpeg", // Convert to JPEG for better compression
+        initialQuality: 0.8, // Quality (0.8 = 80%)
+      };
+
+      // Compress the image
+      const compressedFile = await imageCompression(file, options);
+
+      // Log compression results (optional)
+      console.log(`Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      console.log(
+        `Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`
+      );
+      console.log(
+        `Reduction: ${(
+          ((file.size - compressedFile.size) / file.size) *
+          100
+        ).toFixed(1)}%`
+      );
+
+      // Update form data with compressed file
+      setFormData((prev) => ({
         ...prev,
-        image: file
+        image: compressedFile, // Use compressed file instead of original
       }));
-      
+
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          imagePreview: reader.result
+          imagePreview: reader.result,
         }));
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile); // Read compressed file for preview
+
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      setMessage("Error compressing image. Please try again.");
+      setUploadStatus("error");
+      setTimeout(() => setUploadStatus(null), 4000);
+      setIsLoading(false);
     }
   };
 
@@ -75,100 +134,140 @@ const PremiumProductUpload = () => {
     e.stopPropagation();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      setFormData(prev => ({
+    if (files.length === 0) return;
+
+    const file = files[0];
+
+    // Check if it's an image
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please upload an image file");
+      setUploadStatus("error");
+      setTimeout(() => setUploadStatus(null), 4000);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Compression options
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: "image/jpeg",
+        initialQuality: 0.8,
+      };
+
+      // Compress the image
+      const compressedFile = await imageCompression(file, options);
+
+      console.log(`Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      console.log(
+        `Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`
+      );
+
+      setFormData((prev) => ({
         ...prev,
-        image: file
+        image: compressedFile,
       }));
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          imagePreview: reader.result
+          imagePreview: reader.result,
         }));
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      setMessage("Error compressing image. Please try again.");
+      setUploadStatus("error");
+      setTimeout(() => setUploadStatus(null), 4000);
+      setIsLoading(false);
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (
-    !formData.name ||
-    !formData.price ||
-    !formData.image ||
-    !formData.category ||
-    !formData.brand
-  ) {
-    setUploadStatus("error");
-    setMessage("Please fill in all required fields and upload an image");
-    setTimeout(() => setUploadStatus(null), 4000);
-    return;
-  }
+    if (
+      !formData.name ||
+      !formData.price ||
+      !formData.image ||
+      !formData.category ||
+      !formData.brand
+    ) {
+      setUploadStatus("error");
+      setMessage("Please fill in all required fields and upload an image");
+      setTimeout(() => setUploadStatus(null), 4000);
+      return;
+    }
 
-  setIsLoading(true);
-  setUploadStatus(null);
+    setIsLoading(true);
+    setUploadStatus(null);
 
-  try {
-    const formDataToSend = new FormData();
-    formDataToSend.append("name", formData.name);
-    formDataToSend.append("description", formData.description);
-    formDataToSend.append("price", formData.price);
-    formDataToSend.append("category", formData.category);
-    formDataToSend.append("brand", formData.brand);
-    formDataToSend.append("stock", formData.stock);
-    formDataToSend.append("image", formData.image); // 👈 actual file
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("brand", formData.brand);
+      formDataToSend.append("stock", formData.stock);
+      formDataToSend.append("image", formData.image); // 👈 actual file
 
-    const response = await fetch(`${API_URL}/addProduct`, {
-      method: "POST",
-      body: formDataToSend,
-      credentials: "include",
-    });
+      const response = await fetch(`${API_URL}/addProduct`, {
+        method: "POST",
+        body: formDataToSend,
+        credentials: "include",
+      });
 
-    if (!response.ok) throw new Error("Product upload failed");
+      if (!response.ok) throw new Error("Product upload failed");
 
-    setUploadStatus("success");
-    setMessage("Product uploaded successfully!");
-    setFormData({
-      name: "",
-      description: "",
-      price: "",
-      category: "",
-      brand: "",
-      stock: "",
-      image: null,
-      imagePreview: null,
-    });
+      setUploadStatus("success");
+      setMessage("Product uploaded successfully!");
+      setFormData({
+        name: "",
+        description: "",
+        price: "",
+        category: "",
+        brand: "",
+        stock: "",
+        image: null,
+        imagePreview: null,
+      });
 
-    setTimeout(() => {
-      setUploadStatus(null);
-      setMessage("");
-    }, 4000);
-  } catch (error) {
-    setUploadStatus("error");
-    setMessage(error.message || "Failed to upload product. Please try again.");
-    setTimeout(() => setUploadStatus(null), 4000);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+      setTimeout(() => {
+        setUploadStatus(null);
+        setMessage("");
+      }, 4000);
+    } catch (error) {
+      setUploadStatus("error");
+      setMessage(
+        error.message || "Failed to upload product. Please try again."
+      );
+      setTimeout(() => setUploadStatus(null), 4000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const removeImage = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       image: null,
-      imagePreview: null
+      imagePreview: null,
     }));
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -191,19 +290,23 @@ const handleSubmit = async (e) => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl mb-6">
             <Upload className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-light text-white mb-2">Add New Product</h1>
-          <p className="text-white/60 font-light">Upload and list your product to the marketplace</p>
+          <h1 className="text-4xl font-light text-white mb-2">
+            Add New Product
+          </h1>
+          <p className="text-white/60 font-light">
+            Upload and list your product to the marketplace
+          </p>
         </div>
 
         {/* Status Messages */}
-        {uploadStatus === 'success' && (
+        {uploadStatus === "success" && (
           <div className="mb-8 bg-green-500/20 border border-green-400/30 text-green-400 p-4 rounded-2xl backdrop-blur-sm flex items-center gap-3">
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
             <span>{message}</span>
           </div>
         )}
 
-        {uploadStatus === 'error' && (
+        {uploadStatus === "error" && (
           <div className="mb-8 bg-red-500/20 border border-red-400/30 text-red-400 p-4 rounded-2xl backdrop-blur-sm flex items-center gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{message}</span>
@@ -221,8 +324,8 @@ const handleSubmit = async (e) => {
 
             {formData.imagePreview ? (
               <div className="relative">
-                <img 
-                  src={formData.imagePreview} 
+                <img
+                  src={formData.imagePreview}
                   alt="Preview"
                   className="w-full h-64 object-cover rounded-2xl border border-white/10"
                 />
@@ -249,9 +352,15 @@ const handleSubmit = async (e) => {
                 className="border-2 border-dashed border-white/20 rounded-2xl p-12 text-center cursor-pointer hover:border-white/40 transition-colors bg-white/5"
               >
                 <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
-                <p className="text-white/80 font-light mb-2">Drag and drop your image here</p>
-                <p className="text-white/50 text-sm font-light">or click to browse from your device</p>
-                <p className="text-white/40 text-xs mt-4">Supported formats: JPG, PNG, WebP (Max 5MB)</p>
+                <p className="text-white/80 font-light mb-2">
+                  Drag and drop your image here
+                </p>
+                <p className="text-white/50 text-sm font-light">
+                  or click to browse from your device
+                </p>
+                <p className="text-white/40 text-xs mt-4">
+                  Supported formats: JPG, PNG, WebP (Max 5MB)
+                </p>
               </div>
             )}
 
@@ -346,15 +455,17 @@ const handleSubmit = async (e) => {
                     className="w-full bg-black border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors appearance-none cursor-pointer"
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 0.75rem center',
-                      backgroundSize: '1rem',
-                      paddingRight: '2.5rem'
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 0.75rem center",
+                      backgroundSize: "1rem",
+                      paddingRight: "2.5rem",
                     }}
                   >
                     <option value="">Select a category</option>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -370,15 +481,17 @@ const handleSubmit = async (e) => {
                     className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors appearance-none cursor-pointer"
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 0.75rem center',
-                      backgroundSize: '1rem',
-                      paddingRight: '2.5rem'
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 0.75rem center",
+                      backgroundSize: "1rem",
+                      paddingRight: "2.5rem",
                     }}
                   >
                     <option value="">Select a brand</option>
-                    {brands.map(brand => (
-                      <option key={brand} value={brand}>{brand}</option>
+                    {brands.map((brand) => (
+                      <option key={brand} value={brand}>
+                        {brand}
+                      </option>
                     ))}
                   </select>
                 </div>

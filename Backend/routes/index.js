@@ -58,7 +58,9 @@ router.post("/registerUser", async (req, res) => {
         lastName: newUser.lastName,
         email: newUser.email,
       };
-      res.status(201).json({ message: "Registration successful", user: safeUser });
+      res
+        .status(201)
+        .json({ message: "Registration successful", user: safeUser });
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -70,14 +72,16 @@ router.post("/loginUser", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) return next(err);
     if (!user)
-      return res.status(401).json({ message: info?.message || "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ message: info?.message || "Invalid credentials" });
 
     req.logIn(user, (err) => {
       if (err) {
         console.error("Login error:", err);
         return next(err);
       }
-      
+
       // ✅ CRITICAL: Explicitly save session before responding
       req.session.save((saveErr) => {
         if (saveErr) {
@@ -97,15 +101,15 @@ router.post("/loginUser", (req, res, next) => {
         console.log("✅ User logged in:", safeUser.email);
 
         console.log("✅ Session:", req.session);
-        
-        res.status(200).json({ 
-          message: "Login successful", 
+
+        res.status(200).json({
+          message: "Login successful",
           user: safeUser,
           // Remove in production, just for debugging:
           debug: {
             sessionID: req.sessionID,
-            hasSession: !!req.session
-          }
+            hasSession: !!req.session,
+          },
         });
       });
     });
@@ -125,7 +129,6 @@ router.get("/logout", (req, res, next) => {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        
       });
 
       res.status(200).json({ message: "Logged out successfully" });
@@ -140,7 +143,7 @@ router.get("/userData", isLoggedIn, async (req, res) => {
 
 // Get all users
 router.get("/users", async (req, res) => {
-  const users = await UserModel.find({role:"customer"});
+  const users = await UserModel.find({ role: "customer" });
   res.json(users);
 });
 
@@ -174,7 +177,6 @@ router.put("/users/:id/status", async (req, res) => {
   }
 });
 
-
 // -----------------------------
 // 🛍️ PRODUCT ROUTES
 // -----------------------------
@@ -201,16 +203,24 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
     let imageUrl = null;
 
     if (req.file) {
-      // ✅ Upload buffer directly to Cloudinary using a stream
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { folder: "ecommerce_products" },
+          {
+            folder: "ecommerce_products",
+            // Add these transformations for further optimization
+            transformation: [
+              { width: 1200, height: 1200, crop: "limit" },
+              { quality: "auto:good" },
+              { fetch_format: "auto" },
+            ],
+            flags: "lossy",
+          },
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
           }
         );
-        stream.end(req.file.buffer); // send the file buffer
+        stream.end(req.file.buffer);
       });
 
       imageUrl = uploadResult.secure_url;
@@ -232,12 +242,11 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
     res.status(201).json({ message: "Product added successfully", product });
   } catch (err) {
     console.error("Error adding product:", err);
-    res.status(500).json({ message: "Error adding product", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error adding product", error: err.message });
   }
 });
-
-
-
 
 // -----------------------------
 // 📦 ORDER ROUTES
@@ -245,28 +254,28 @@ router.post("/addProduct", upload.single("image"), async (req, res) => {
 router.post("/order", isLoggedIn, async (req, res) => {
   try {
     // Get cart from request body instead of req.cart
-    const { username,cart, shippingAddress, paymentMethod } = req.body;
-    
+    const { username, cart, shippingAddress, paymentMethod } = req.body;
+
     console.log("Received cart:", cart);
-    
+
     if (!cart || cart.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
     // Format items to match Order schema
-    const orderItems = cart.map(item => ({
+    const orderItems = cart.map((item) => ({
       product: item._id, // Use the product ID from cart
       quantity: item.quantity,
     }));
 
     // Calculate total amount from cart items
     const totalAmount = cart.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
+      return sum + item.price * item.quantity;
     }, 0);
 
     const order = new OrderModel({
       user: req.user._id,
-      username:username,
+      username: username,
       items: orderItems,
       totalAmount: totalAmount,
       shippingAddress: shippingAddress,
@@ -275,17 +284,15 @@ router.post("/order", isLoggedIn, async (req, res) => {
 
     await order.save();
 
-  
-
-    res.status(201).json({ 
-      message: "Order placed successfully", 
-      order 
+    res.status(201).json({
+      message: "Order placed successfully",
+      order,
     });
   } catch (err) {
     console.error("Order placement error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Order placement failed",
-      error: err.message 
+      error: err.message,
     });
   }
 });
@@ -318,10 +325,9 @@ router.get("/getOrders", isLoggedIn, async (req, res) => {
 });
 
 router.get("/getUserOrders", isLoggedIn, async (req, res) => {
-  const orders = await OrderModel.find({email:req.email});
+  const orders = await OrderModel.find({ email: req.email });
   res.json(orders);
 });
-
 
 // -----------------------------
 // MIDDLEWARES

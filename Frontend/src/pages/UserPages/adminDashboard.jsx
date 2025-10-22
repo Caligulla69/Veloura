@@ -29,7 +29,7 @@ import {
   Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../../utils/api";
 import { checkAuth } from "../../utils/checkAuth";
 import { logout } from "../../utils/logout";
@@ -709,10 +709,10 @@ const AdminDashboard = () => {
                       Manage your product inventory
                     </p>
                   </div>
-                  <button className="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors text-sm font-medium flex items-center space-x-2 w-fit">
+                  <Link to="/prodUpload" className="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors text-sm font-medium flex items-center space-x-2 w-fit">
                     <Plus className="w-4 h-4" />
                     <span>Add Product</span>
-                  </button>
+                  </Link>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
