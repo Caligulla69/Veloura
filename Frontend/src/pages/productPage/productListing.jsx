@@ -245,7 +245,8 @@ const LuxuryProductListing = () => {
   const [productData, setProductData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [user, setUser] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -272,6 +273,32 @@ const LuxuryProductListing = () => {
 
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/userData`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setUser(data.user);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      }
+    };
+
+    getUserData();
+  }, []);
+  console.log(user);
+  useEffect(() => {
+    if (user?.role === "admin") {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
+
+  console.log(isAdmin);
 
   // State management
   const [searchTerm, setSearchTerm] = useState("");
@@ -419,7 +446,7 @@ const LuxuryProductListing = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-black to-slate-900">
-        <Navbar />
+        <Navbar isAdmin={isAdmin} />
         <div className="fixed inset-0 opacity-20 pointer-events-none bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
 
         <div className="relative z-10">

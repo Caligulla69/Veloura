@@ -7,10 +7,11 @@ import { useAuthStore } from '../store/useAuthStore';
 import API_URL from '../utils/api';
 import { logout } from '../utils/logout';
 
-export default function Navbar() {
+export default function Navbar({isAdmin=false}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+
 
   // Get cart and wishlist counts from Zustand stores
   const cartCount = useCartStore((state) => state.cart.length);
@@ -88,7 +89,7 @@ export default function Navbar() {
             <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
               
               
-              <Link to="/dashboard" className="hidden md:block text-white hover:text-white/60 transition-colors p-2" aria-label="Account">
+              <Link to={isAdmin?"/adminDashboard":"/dashboard"} className="hidden md:block text-white hover:text-white/60 transition-colors p-2" aria-label="Account">
                 <User className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.5} />
               </Link>
 
